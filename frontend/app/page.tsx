@@ -13,7 +13,7 @@ export default function LandingPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 2500); // Show preloader for 2.5s
+    }, 2600);
     return () => clearTimeout(timer);
   }, []);
 
@@ -22,16 +22,13 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center justify-start overflow-hidden bg-black text-white bg-mesh px-4">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-start overflow-hidden bg-black text-white px-4">
       <Navbar />
 
       {/* Background Ripple */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
-        <BackgroundRippleEffect rows={40} cols={80} cellSize={30} />
+      <div className="absolute inset-0 z-0 opacity-100 pointer-events-none overflow-hidden [mask-image:linear-gradient(to_bottom,white,transparent)]">
+        <BackgroundRippleEffect rows={35} cols={70} cellSize={50} />
       </div>
-
-      {/* Hero Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-lg h-96 bg-glow blur-[120px] pointer-events-none z-0 opacity-60" />
 
       {/* Hero Section */}
       <main className="relative z-10 flex flex-col items-center justify-center mt-40 px-4 text-center">
@@ -103,7 +100,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="relative z-10 mt-40 pb-10 text-neutral-600 text-sm font-mono">
-        &copy; {Date()} CUBEX PLATFORM. ALL RIGHTS RESERVED.
+        &copy; {new Date().getFullYear()} CUBEX PLATFORM. ALL RIGHTS RESERVED.
       </footer>
     </div>
   );
