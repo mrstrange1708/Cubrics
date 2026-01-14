@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import CircularTimer from './CircularTimer';
 
 interface TimerProps {
     onStart?: () => void;
@@ -19,18 +20,6 @@ export default function Timer({ onStart, onStop, className, isScrambled = false 
     const startTimeRef = useRef<number>(0);
     const holdStartRef = useRef<number>(0);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Format time as mm:ss.ms
-    const formatTime = (ms: number) => {
-        const minutes = Math.floor(ms / 60000);
-        const seconds = Math.floor((ms % 60000) / 1000);
-        const milliseconds = Math.floor((ms % 1000) / 10); // Show 2 digits
-
-        if (minutes > 0) {
-            return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
-        }
-        return `${seconds}.${milliseconds.toString().padStart(2, '0')}`;
-    };
 
     const animate = useCallback(() => {
         const now = performance.now();
@@ -63,15 +52,13 @@ export default function Timer({ onStart, onStop, className, isScrambled = false 
             if (state === 'RUNNING') {
                 stopTimer();
             } else if (state === 'IDLE' || state === 'STOPPED') {
-                if (state !== 'HOLDING' && state !== 'READY') {
-                    setState('HOLDING');
-                    holdStartRef.current = Date.now();
+                setState('HOLDING');
+                holdStartRef.current = Date.now();
 
-                    // Wait 300ms to become READY (Competition standard)
-                    timeoutRef.current = setTimeout(() => {
-                        setState('READY');
-                    }, 300);
-                }
+                // Wait 300ms to become READY
+                timeoutRef.current = setTimeout(() => {
+                    setState('READY');
+                }, 300);
             }
         }
     }, [state, stopTimer]);
@@ -81,14 +68,11 @@ export default function Timer({ onStart, onStop, className, isScrambled = false 
             if (state === 'READY') {
                 startTimer();
             } else if (state === 'HOLDING') {
-                // Released too early
                 setState('IDLE');
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
             } else if (state === 'STOPPED') {
-                // Just stopped, wait for next press
-                // Optional: Auto reset to IDLE after delay or manual reset?
-                // For now, spaceup on stopped does nothing, next spacedown resets
                 setState('IDLE');
+                setTime(0);
             }
         }
     }, [state, startTimer]);
@@ -104,31 +88,9 @@ export default function Timer({ onStart, onStop, className, isScrambled = false 
         };
     }, [handleKeyDown, handleKeyUp]);
 
-    // Color states
-    const getTimerColor = () => {
-        switch (state) {
-            case 'IDLE': return 'text-white';
-            case 'HOLDING': return 'text-red-500'; // Not ready yet
-            case 'READY': return 'text-green-500'; // Ready to start
-            case 'RUNNING': return 'text-white';
-            case 'STOPPED': return 'text-white';
-            default: return 'text-white';
-        }
-    };
-
     return (
         <div className={cn("flex flex-col items-center justify-center select-none", className)}>
-            <div className={cn("text-8xl md:text-9xl font-black font-mono tracking-tighter transition-colors duration-100", getTimerColor())}>
-                {formatTime(time)}
-            </div>
-
-            <div className="h-8 mt-4 text-neutral-500 font-medium text-sm uppercase tracking-widest">
-                {state === 'IDLE' && "Hold SPACE to start"}
-                {state === 'HOLDING' && "Hold..."}
-                {state === 'READY' && "Release to Solve!"}
-                {state === 'RUNNING' && "Solving..."}
-                {state === 'STOPPED' && "Press SPACE to reset"}
-            </div>
+            <CircularTimer time={time} state={state} />
         </div>
     );
 }
