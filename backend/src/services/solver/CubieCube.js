@@ -94,7 +94,7 @@ class CubieCube {
         // Define R move
         const moveR = new CubieCube();
         moveR.cp = [4, 1, 2, 0, 7, 5, 6, 3];
-        moveR.co = [1, 0, 0, 2, 2, 0, 0, 1];
+        moveR.co = [2, 0, 0, 1, 1, 0, 0, 2];
         moveR.ep = [8, 1, 2, 3, 11, 5, 6, 7, 4, 9, 10, 0];
         moveR.eo = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         moves['R'] = moveR;

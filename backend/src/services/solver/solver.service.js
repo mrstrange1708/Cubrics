@@ -4,7 +4,6 @@ const Search = require('./Search');
 class SolverService {
     solve(stickers) {
         try {
-            // 1. Check if stickers are provided
             if (!stickers) {
                 throw new Error("No cube state provided.");
             }
@@ -71,21 +70,21 @@ class SolverService {
 
         const getFace = (f, idx) => colorToFace[stickers[f][idx]];
 
-        // Define corners and edges in CubieCube order
-        // Cubie Order: URF, UFL, ULB, UBR, DFR, DLF, DLB, DBR
-        // Facelet order: Standard Kociemba CW, except corners symmetric across center (UBR, DLF) which are CCW
+        // Corner definitions following Kociemba standard
+        // U-layer: U facelet, then CW when looking from above
+        // D-layer: D facelet, then CW when looking from below
         const cornerDefs = [
-            { pos: 'URF', facelets: [['U', 8], ['R', 0], ['F', 2]] },  // CW
-            { pos: 'UFL', facelets: [['U', 6], ['F', 0], ['L', 2]] },  // CW
-            { pos: 'ULB', facelets: [['U', 0], ['L', 0], ['B', 2]] },  // CW
-            { pos: 'UBR', facelets: [['U', 2], ['R', 2], ['B', 0]] },  // CCW (Special Case)
-            { pos: 'DFR', facelets: [['D', 2], ['F', 8], ['R', 6]] },  // CW
-            { pos: 'DLF', facelets: [['D', 0], ['L', 8], ['F', 6]] },  // CCW (Special Case)
-            { pos: 'DLB', facelets: [['D', 6], ['B', 8], ['L', 6]] },  // CW
-            { pos: 'DBR', facelets: [['D', 8], ['B', 6], ['R', 8]] }   // CW
+            { pos: 'URF', facelets: [['U', 8], ['R', 0], ['F', 2]] },
+            { pos: 'UFL', facelets: [['U', 6], ['F', 0], ['L', 2]] },
+            { pos: 'ULB', facelets: [['U', 0], ['L', 0], ['B', 2]] },
+            { pos: 'UBR', facelets: [['U', 2], ['B', 0], ['R', 2]] },
+            { pos: 'DFR', facelets: [['D', 2], ['F', 8], ['R', 6]] },
+            { pos: 'DLF', facelets: [['D', 0], ['L', 8], ['F', 6]] },
+            { pos: 'DLB', facelets: [['D', 6], ['B', 8], ['L', 6]] },
+            { pos: 'DBR', facelets: [['D', 8], ['R', 8], ['B', 6]] }
         ];
 
-        // Cubie Order: UR, UF, UL, UB, DR, DF, DL, DB, FR, FL, BL, BR
+        // Edge definitions: [primary facelet, secondary facelet]
         const edgeDefs = [
             { pos: 'UR', facelets: [['U', 5], ['R', 1]] },
             { pos: 'UF', facelets: [['U', 7], ['F', 1]] },
@@ -101,31 +100,19 @@ class SolverService {
             { pos: 'BR', facelets: [['B', 3], ['R', 5]] }
         ];
 
-        // 1. Identify Corners
+        // 1. Identify Corners with explicit orientation tracking
         for (let i = 0; i < 8; i++) {
             const actualFaces = cornerDefs[i].facelets.map(([f, idx]) => getFace(f, idx));
 
-            // Find which logical corner this is
             let foundId = -1;
             let foundOri = -1;
 
             for (let j = 0; j < 8; j++) {
                 const targetFaces = cornerDefs[j].facelets.map(([f]) => f);
-                const match = this.matchCorner(actualFaces, targetFaces);
+                const match = this.matchCorner(actualFaces, targetFaces, i, j);
                 if (match.isMatch) {
                     foundId = j;
-
-                    let rawOri = match.orientation;
-
-                    // Final Chirality Rule:
-                    // D-Right pieces (DFR=4, DBR=7) always require Inverted Orientation.
-                    // Calibration Exception: DFR (4) at UFL (1) must stay Raw to fix R U sequence.
-                    // All other pieces use Raw Orientation.
-                    if ((j === 4 || j === 7) && !(j === 4 && i === 1)) {
-                        foundOri = (rawOri === 0) ? 0 : (3 - rawOri);
-                    } else {
-                        foundOri = rawOri;
-                    }
+                    foundOri = match.orientation;
                     break;
                 }
             }
@@ -133,6 +120,12 @@ class SolverService {
             if (foundId === -1) throw new Error(`Invalid corner colors at ${cornerDefs[i].pos}`);
             cubie.cp[i] = foundId;
             cubie.co[i] = foundOri;
+        }
+
+        // Validate corner orientation sum
+        const coSum = cubie.co.reduce((a, b) => a + b, 0);
+        if (coSum % 3 !== 0) {
+            throw new Error(`Invalid corner orientation parity: sum=${coSum}, expected mod 3 = 0`);
         }
 
         // 2. Identify Edges
@@ -157,10 +150,16 @@ class SolverService {
             cubie.eo[i] = foundOri;
         }
 
+        // Validate edge orientation sum
+        const eoSum = cubie.eo.reduce((a, b) => a + b, 0);
+        if (eoSum % 2 !== 0) {
+            throw new Error(`Invalid edge orientation parity: sum=${eoSum}, expected mod 2 = 0`);
+        }
+
         return cubie;
     }
 
-    matchCorner(actual, target) {
+    matchCorner(actual, target, slotIndex, pieceIndex) {
         // Find if actual faces contain same letters as target
         if (actual.length !== 3 || target.length !== 3) return { isMatch: false };
 
@@ -169,8 +168,7 @@ class SolverService {
 
         if (actualSorted !== targetSorted) return { isMatch: false };
 
-        // Orientation: Find where the U/D sticker is in the actual reading
-        // Then map it to the target's frame to get the twist value
+        // Find where the U/D sticker appears in the actual reading
         let udIndex = -1;
         for (let i = 0; i < 3; i++) {
             if (actual[i] === 'U' || actual[i] === 'D') {
@@ -179,10 +177,12 @@ class SolverService {
             }
         }
 
-        // The orientation value is how many clockwise twists to align the corner
-        // In Kociemba convention: 0 = correct, 1 = CW twist, 2 = CCW twist
-        // The twist depends on which slot the U/D facelet occupies
-        return { isMatch: true, orientation: udIndex };
+        // Orientation calculation:
+        // Return raw position of U/D sticker (0, 1, 2)
+        // We will adjust CubieCube definitions to match this standard reading
+        const orientation = udIndex;
+
+        return { isMatch: true, orientation };
     }
 
     matchEdge(actual, target) {
