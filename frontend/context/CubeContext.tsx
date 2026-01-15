@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { CubeState, FaceKey } from '@/components/solver/CubeNet';
 import { Phase, cubeApi } from '@/api/cube.api';
 import { CubeColor } from '@/components/solver/ColorPicker';
@@ -38,20 +38,20 @@ export function CubeProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
     const [selectedColor, setSelectedColor] = useState<CubeColor>('white');
 
-    const updateSticker = (face: FaceKey, index: number, color: CubeColor) => {
+    const updateSticker = useCallback((face: FaceKey, index: number, color: CubeColor) => {
         setCubeState(prev => ({
             ...prev,
             [face]: prev[face].map((c, i) => i === index ? color : c)
         }));
-    };
+    }, []);
 
-    const resetCube = () => {
+    const resetCube = useCallback(() => {
         setCubeState(initialCubeState);
         setError(null);
         setSolutionPhases([]);
-    };
+    }, []);
 
-    const solve = async () => {
+    const solve = useCallback(async () => {
         setIsSolving(true);
         setError(null);
         try {
@@ -84,9 +84,9 @@ export function CubeProvider({ children }: { children: ReactNode }) {
             toast.error(errorMessage);
             return false;
         }
-    };
+    }, [cubeState]); // data depends on current cubeState
 
-    const scramble = async () => {
+    const scramble = useCallback(async () => {
         setIsSolving(true);
         try {
             const data = await cubeApi.scrambleCube();
@@ -99,7 +99,7 @@ export function CubeProvider({ children }: { children: ReactNode }) {
         } finally {
             setIsSolving(false);
         }
-    };
+    }, []);
 
     return (
         <CubeContext.Provider value={{

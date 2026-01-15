@@ -2,11 +2,11 @@
 
 import { CubeNet } from '@/components/solver/CubeNet';
 import { ColorPicker } from '@/components/solver/ColorPicker';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Play, Zap } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 import { useCube } from '@/context/CubeContext';
 import { FaceKey } from '@/components/solver/CubeNet';
@@ -20,6 +20,9 @@ const loadingStates = [
 
 export default function SolvePage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const shouldReset = searchParams.get('reset');
+
     const {
         cubeState,
         isSolving,
@@ -34,6 +37,13 @@ export default function SolvePage() {
 
     const [loaderActive, setLoaderActive] = useState(false);
     const [isWorkDone, setIsWorkDone] = useState(false);
+
+    useEffect(() => {
+        if (shouldReset) {
+            resetCube();
+            router.replace('/solver/manual');
+        }
+    }, [shouldReset, resetCube, router]);
 
     const handleStickerClick = (face: FaceKey, index: number) => {
         updateSticker(face, index, selectedColor);

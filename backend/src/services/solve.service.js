@@ -15,6 +15,21 @@ class SolveService {
 
         // 2. Transaction to ensure stats are synced
         return await prisma.$transaction(async (tx) => {
+            // Check if user exists, create if not (for demo/guest mode)
+            let user = await tx.user.findUnique({ where: { id: userId } });
+            if (!user) {
+                // Generate dummy credentials for guest
+                const randomSuffix = Math.random().toString(36).substr(2, 6);
+                user = await tx.user.create({
+                    data: {
+                        id: userId,
+                        username: `Guest_${randomSuffix}`,
+                        email: `guest_${randomSuffix}@example.com`,
+                        password: 'guest_password_placeholder', // Should be hashed in real app
+                    }
+                });
+            }
+
             // Create Solve
             const solve = await tx.solve.create({
                 data: {
@@ -27,8 +42,6 @@ class SolveService {
             });
 
             // Update User Stats
-            const user = await tx.user.findUnique({ where: { id: userId } });
-
             const updates = {
                 totalSolves: { increment: 1 }
             };

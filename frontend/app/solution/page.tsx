@@ -9,7 +9,7 @@ import { useCube } from "@/context/CubeContext";
 import Cube3D from '@/components/solver/Cube3D';
 
 function SolutionContent() {
-    const { solutionPhases: phases } = useCube();
+    const { solutionPhases: phases, resetCube } = useCube();
     const router = useRouter();
 
     const [currentMove, setCurrentMove] = useState(-1);
@@ -109,7 +109,10 @@ function SolutionContent() {
                             <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => router.push('/solver/manual')}
+                                onClick={() => {
+                                    // resetCube(); // Handled by query param on next page
+                                    router.push('/solver/manual?reset=true');
+                                }}
                                 className="w-12 h-12 border-white/10 hover:bg-white/5"
                             >
                                 <RotateCcw className="w-5 h-5 text-white " />

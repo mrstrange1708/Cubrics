@@ -58,6 +58,7 @@ class LeaderboardService {
             rank,
             totalPlayers: totalCount,
             percentile, // integer, e.g. 5 means "Top 5%"
+            bestSolve: user.bestSolve
         };
     }
 }
