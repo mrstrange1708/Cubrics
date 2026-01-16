@@ -1,16 +1,16 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-class SolveService {
+class TimerService {
     /**
-     * Create a new solve record and update user stats
+     * Create a new timer record and update user stats
      */
-    async createSolve(userId, data) {
-        // data: { time: number (ms), scramble: string, moveCount?: number }
+    async createTimerRecord(userId, data) {
+        // data: { time: number (ms) }
 
         // 1. Verify input (basic)
-        if (!data.time || !data.scramble) {
-            throw new Error('Time and scramble are required');
+        if (!data.time) {
+            throw new Error('Time is required');
         }
 
         // 2. Transaction to ensure stats are synced
@@ -30,14 +30,11 @@ class SolveService {
                 });
             }
 
-            // Create Solve
-            const solve = await tx.solve.create({
+            // Create TimerRecord
+            const timerRecord = await tx.timerRecord.create({
                 data: {
                     userId,
-                    time: data.time,
-                    scramble: data.scramble,
-                    moveCount: data.moveCount || 0,
-                    isValid: true
+                    time: data.time
                 }
             });
 
@@ -56,12 +53,12 @@ class SolveService {
                 data: updates
             });
 
-            return solve;
+            return timerRecord;
         });
     }
 
-    async getUserSolves(userId, limit = 50, offset = 0) {
-        return await prisma.solve.findMany({
+    async getUserTimerRecords(userId, limit = 50, offset = 0) {
+        return await prisma.timerRecord.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
             take: Number(limit),
@@ -75,9 +72,8 @@ class SolveService {
             select: { totalSolves: true, bestSolve: true }
         });
 
-        // TODO: Calc averages (AO5, AO12) dynamically if needed
         return user;
     }
 }
 
-module.exports = new SolveService();
+module.exports = new TimerService();

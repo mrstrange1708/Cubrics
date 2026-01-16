@@ -1,9 +1,12 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Grid3X3, Camera, ArrowRight, MousePointer2 } from 'lucide-react';
+import { Grid3X3, Camera, ArrowRight } from 'lucide-react';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
-export default function SolverSelectionPage() {
+function SolverPageContent() {
     return (
         <div className="min-h-screen bg-black/95 text-foreground flex flex-col items-center relative overflow-hidden">
             <Navbar />
@@ -58,5 +61,13 @@ export default function SolverSelectionPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SolverSelectionPage() {
+    return (
+        <ProtectedRoute>
+            <SolverPageContent />
+        </ProtectedRoute>
     );
 }

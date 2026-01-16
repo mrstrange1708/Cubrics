@@ -1,28 +1,28 @@
 const express = require('express');
-const solveService = require('../services/solve.service');
+const timerService = require('../services/timer.service');
 const router = express.Router();
 
-// POST /solve - Create a new solve
+// POST /timer - Create a new timer record
 router.post('/', async (req, res) => {
     try {
-        const { userId, time, scramble, moveCount } = req.body;
+        const { userId, time } = req.body;
         if (!userId) {
             return res.status(400).json({ error: "userId is required" });
         }
-        const solve = await solveService.createSolve(userId, { time, scramble, moveCount });
-        res.json(solve);
+        const record = await timerService.createTimerRecord(userId, { time });
+        res.json(record);
     } catch (error) {
-        console.error("Create Solve Error:", error);
+        console.error("Create Timer Record Error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// GET /solve/user/:userId - Get user solves
+// GET /timer/user/:userId - Get user timer records
 router.get('/user/:userId', async (req, res) => {
     try {
         const { limit, offset } = req.query;
-        const solves = await solveService.getUserSolves(req.params.userId, limit, offset);
-        res.json(solves);
+        const records = await timerService.getUserTimerRecords(req.params.userId, limit, offset);
+        res.json(records);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

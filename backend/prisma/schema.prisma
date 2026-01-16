@@ -18,11 +18,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Stats
-  bestSolve   Int? // milliseconds
+  bestSolve   Int?
   totalSolves Int  @default(0)
 
   // Relations
-  solves                 Solve[]
+  timerRecords           TimerRecord[]
   posts                  Post[]
   comments               Comment[]
   likes                  Like[]
@@ -33,16 +33,11 @@ model User {
   receivedMessages       Message[]       @relation("ReceivedMessages")
 }
 
-model Solve {
+model TimerRecord {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   time      Int // milliseconds
-  moveCount Int?
-  scramble  String // move sequence
-  solution  String? // move sequence (optional for now)
-  checksum  String? // for validation
-  isValid   Boolean  @default(true)
   createdAt DateTime @default(now())
 
   @@index([userId, time])
@@ -72,13 +67,13 @@ model Friendship {
 }
 
 model Post {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  content   String
-  solveId   String? // optional link to a solve
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  content       String
+  timerRecordId String? // optional link to a timer record
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   comments Comment[]
   likes    Like[]
