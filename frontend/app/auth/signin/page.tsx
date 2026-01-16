@@ -4,12 +4,22 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Loader2, Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authApi } from "@/api/auth";
 import { useAuth } from "@/context/AuthContext";
-import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MagicCard } from "@/components/ui/magic-card";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -19,7 +29,6 @@ export default function LoginPage() {
         password: "",
     });
     const [loading, setLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -55,19 +64,10 @@ export default function LoginPage() {
             </div>
 
             {/* Main Content */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="relative z-10 w-full max-w-md px-6"
-            >
+            <div className="relative z-10 w-full max-w-sm px-4">
                 {/* Logo */}
-                <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    className="flex flex-col items-center mb-8"
-                >
-                    <div className="relative w-16 h-16 mb-4">
+                <div className="flex flex-col items-center mb-8">
+                    <div className="relative w-14 h-14 mb-4">
                         <Image
                             src="/icon.svg"
                             alt="CubeX Logo"
@@ -75,133 +75,78 @@ export default function LoginPage() {
                             className="object-contain"
                         />
                     </div>
-                    <h1 className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-400">
-                        Welcome Back
-                    </h1>
-                    <p className="text-neutral-500 text-sm mt-2">
-                        Sign in to continue your cubing journey
-                    </p>
-                </motion.div>
+                </div>
 
-                {/* Login Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="relative"
-                >
-                    {/* Card Glow */}
-                    <div className="absolute -inset-px bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-cyan-500/50 rounded-2xl blur-sm opacity-50" />
-
-                    {/* Card Content */}
-                    <div className="relative bg-neutral-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Email Input */}
-                            <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium text-neutral-300">
-                                    Email
-                                </label>
-                                <div className="relative">
-                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        required
-                                        className="w-full pl-12 pr-4 py-3.5 bg-black/50 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
-                                        placeholder="Enter your email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                    />
+                {/* Login Card with MagicCard */}
+                <Card className="w-full border-none p-0 shadow-none bg-transparent">
+                    <MagicCard
+                        gradientColor="#262626"
+                        gradientFrom="#3b82f6"
+                        gradientTo="#8b5cf6"
+                        className="p-0 rounded-2xl"
+                    >
+                        <CardHeader className="border-b border-white/10 p-6 pb-4">
+                            <CardTitle className="text-xl">Welcome Back</CardTitle>
+                            <CardDescription>
+                                Enter your credentials to access your account
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <form onSubmit={handleSubmit}>
+                                <div className="grid gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            placeholder="name@example.com"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="password">Password</Label>
+                                            <Link
+                                                href="/auth/forgot-password"
+                                                className="text-xs text-blue-400 hover:text-blue-300"
+                                            >
+                                                Forgot password?
+                                            </Link>
+                                        </div>
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            type="password"
+                                            placeholder="••••••••"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-
-                            {/* Password Input */}
-                            <div className="space-y-2">
-                                <label htmlFor="password" className="text-sm font-medium text-neutral-300">
-                                    Password
-                                </label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        required
-                                        className="w-full pl-12 pr-4 py-3.5 bg-black/50 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
-                                        placeholder="Enter your password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Remember Me */}
-                            <div className="flex items-center justify-between">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={rememberMe}
-                                        onChange={(e) => setRememberMe(e.target.checked)}
-                                        className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500/20 cursor-pointer"
-                                    />
-                                    <span className="text-sm text-neutral-400">Remember me</span>
-                                </label>
-                                <Link href="/auth/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                                    Forgot password?
-                                </Link>
-                            </div>
-
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
+                            </form>
+                        </CardContent>
+                        <CardFooter className="border-t border-white/10 p-6 pt-4 flex flex-col gap-4">
+                            <Button
+                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-none"
+                                onClick={handleSubmit}
                                 disabled={loading}
-                                className={cn(
-                                    "w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200",
-                                    loading
-                                        ? "bg-neutral-800 text-neutral-400 cursor-not-allowed"
-                                        : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
-                                )}
                             >
-                                {loading ? (
-                                    <Loader2 className="animate-spin h-5 w-5" />
-                                ) : (
-                                    <>
-                                        Sign In
-                                        <ArrowRight className="w-4 h-4" />
-                                    </>
-                                )}
-                            </button>
-                        </form>
-
-                        {/* Divider */}
-                        <div className="flex items-center gap-4 my-6">
-                            <div className="flex-1 h-px bg-white/10" />
-                            <span className="text-xs text-neutral-500">OR</span>
-                            <div className="flex-1 h-px bg-white/10" />
-                        </div>
-
-                        {/* Social Login (Placeholder) */}
-                        <button className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-neutral-300 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
-                            <Sparkles className="w-4 h-4 text-purple-400" />
-                            Continue with Magic Link
-                        </button>
-                    </div>
-                </motion.div>
-
-                {/* Sign Up Link */}
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-center text-sm text-neutral-400 mt-6"
-                >
-                    Don't have an account?{" "}
-                    <Link href="/auth/signup" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                        Create one
-                    </Link>
-                </motion.p>
-            </motion.div>
+                                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
+                            </Button>
+                            <p className="text-center text-sm text-neutral-400">
+                                Don't have an account?{" "}
+                                <Link href="/auth/signup" className="text-blue-400 hover:text-blue-300 font-medium">
+                                    Sign up
+                                </Link>
+                            </p>
+                        </CardFooter>
+                    </MagicCard>
+                </Card>
+            </div>
         </div>
     );
 }
