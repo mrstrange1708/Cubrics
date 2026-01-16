@@ -34,6 +34,14 @@ class SolverService {
             // 5. Run our custom scratch-built IDA* Search
             const solution = Search.solve(cubie);
 
+            if (solution === null) {
+                return {
+                    valid: false,
+                    error: "No solution found in time limit.",
+                    message: "The search took too long. Try a different scramble or a shorter sequence."
+                };
+            }
+
             return {
                 valid: true,
                 solution: solution,

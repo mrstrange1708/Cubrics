@@ -34,7 +34,7 @@ class Search {
             if (Date.now() - startTime > MAX_TIME) break;
         }
 
-        if (!this.bestSolution) return "No solution found in time limit.";
+        if (!this.bestSolution) return null;
         return this.simplifyMoves(this.bestSolution).join(' ');
     }
 
