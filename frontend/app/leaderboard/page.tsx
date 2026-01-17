@@ -28,7 +28,7 @@ function LeaderboardPageContent() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const userId = localStorage.getItem('cubex_user_id');
+                const userId = localStorage.getItem('Cubrics_user_id');
                 setCurrentUserId(userId);
 
                 // Fetch Global Leaderboard

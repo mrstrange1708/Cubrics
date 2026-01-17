@@ -38,8 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const parsedUser = JSON.parse(storedUser);
                     setUser(parsedUser);
 
-                    // Also set cubex_user_id for legacy compatibility
-                    localStorage.setItem('cubex_user_id', parsedUser.id);
+                    // Also set Cubrics_user_id for legacy compatibility
+                    localStorage.setItem('Cubrics_user_id', parsedUser.id);
                 }
             } catch (error) {
                 console.error('Auth check failed:', error);
@@ -57,14 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = useCallback((token: string, userData: User) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('cubex_user_id', userData.id);
+        localStorage.setItem('Cubrics_user_id', userData.id);
         setUser(userData);
     }, []);
 
     const logout = useCallback(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        localStorage.removeItem('cubex_user_id');
+        localStorage.removeItem('Cubrics_user_id');
         setUser(null);
         router.push('/auth/signin');
     }, [router]);

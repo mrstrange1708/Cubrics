@@ -116,7 +116,7 @@ export default function SignupPage() {
                     <div className="relative w-14 h-14 mb-4">
                         <Image
                             src="/icon.svg"
-                            alt="CubeX Logo"
+                            alt="Cubrics Logo"
                             fill
                             className="object-contain"
                         />
@@ -134,7 +134,7 @@ export default function SignupPage() {
                         <CardHeader className="border-b border-white/10 p-6 pb-4">
                             <CardTitle className="text-xl">Create Account</CardTitle>
                             <CardDescription>
-                                Join CubeX and start your cubing journey
+                                Join Cubrics and start your cubing journey
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-6">

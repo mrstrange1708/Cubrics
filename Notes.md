@@ -1,4 +1,4 @@
-# 📦 Project Notes — CubeX (Rubik’s Cube Solver Platform)
+# 📦 Project Notes — Cubrics (Rubik’s Cube Solver Platform)
 
 ## 1. Project Vision
 	•	Build a logic-first Rubik’s Cube solving platform

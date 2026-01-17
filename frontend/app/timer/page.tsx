@@ -25,10 +25,10 @@ function TimerPageContent() {
         setIsClient(true);
 
         // Retrieve or Generate Mock ID (In real app, get from Auth Context)
-        let id = localStorage.getItem('cubex_user_id');
+        let id = localStorage.getItem('Cubrics_user_id');
         if (!id) {
             id = 'demo-user-' + Math.random().toString(36).substr(2, 6);
-            localStorage.setItem('cubex_user_id', id);
+            localStorage.setItem('Cubrics_user_id', id);
         }
         setUserId(id);
 

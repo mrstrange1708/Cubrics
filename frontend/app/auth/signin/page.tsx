@@ -79,7 +79,7 @@ export default function LoginPage() {
                     <div className="relative w-14 h-14 mb-4">
                         <Image
                             src="/icon.svg"
-                            alt="CubeX Logo"
+                            alt="Cubrics Logo"
                             fill
                             className="object-contain"
                         />

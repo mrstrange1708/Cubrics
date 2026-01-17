@@ -1,6 +1,6 @@
-🧠 CubeX Backend — Solver Architecture (F2L Method)
+🧠 Cubrics Backend — Solver Architecture (F2L Method)
 
-This document focuses only on backend logic for CubeX.
+This document focuses only on backend logic for Cubrics.
 UI, animations, timers, and visualization are intentionally excluded.
 
 The backend is responsible for:

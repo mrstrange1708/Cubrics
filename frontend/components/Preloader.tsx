@@ -88,7 +88,7 @@ const Preloader: React.FC = () => {
           </g>
         </svg>
         <span className="text-white font-mono tracking-widest text-xl animate-pulse">
-          INITIALIZING CUBEX...
+          INITIALIZING Cubrics...
         </span>
       </div>
     </div>

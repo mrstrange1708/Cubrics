@@ -13,18 +13,18 @@ const Navbar = () => {
     const [showDropdown, setShowDropdown] = useState(false);
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6">
+        <div className="fixed top-[-10px] left-0 right-0 z-50 flex justify-center pt-6">
             <nav className="flex items-center justify-between px-6 py-3 w-[90%] max-w-5xl bg-black/40 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl shadow-black/50">
                 <Link href="/" className="flex items-center gap-3 group">
                     <div className="relative w-8 h-8 overflow-hidden rounded-lg">
                         <Image
-                            src="/icon.svg"
-                            alt="CubeX Logo"
+                            src="/logo.png"
+                            alt="Cubrics Logo"
                             fill
                             className="object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-white/90 group-hover:text-white transition-colors">CubeX</span>
+                    <span className="text-lg font-bold tracking-tight text-white/90 group-hover:text-white transition-colors">Cubrics</span>
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-400">

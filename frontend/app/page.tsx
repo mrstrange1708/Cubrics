@@ -103,7 +103,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="relative z-10 mt-40 pb-10 text-neutral-600 text-sm font-mono">
-        &copy; {new Date().getFullYear()} CUBEX PLATFORM. ALL RIGHTS RESERVED.
+        &copy; {new Date().getFullYear()} Cubrics PLATFORM. ALL RIGHTS RESERVED.
       </footer>
     </div>
   );

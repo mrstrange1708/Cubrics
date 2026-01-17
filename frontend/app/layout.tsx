@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   icons: {
-    icon: '/icon.svg',
+    icon: '/logo.png',
   },
-  title: "CubeX",
+  title: "Cubrics",
   description: "The ultimate platform for cube solvers. Algorithmic thinking meets premium design.",
 };
 
