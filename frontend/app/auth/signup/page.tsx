@@ -223,18 +223,18 @@ export default function SignupPage() {
                                         <RequirementItem met={passwordCriteria.hasSpecial} text="Special" />
                                         <RequirementItem met={passwordCriteria.hasMatched} text="Match" />
                                     </div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border-none mt-2"
+                                        disabled={loading || !isPasswordValid}
+                                    >
+                                        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
+                                    </Button>
                                 </div>
                             </form>
                         </CardContent>
-                        <CardFooter className="border-t border-white/10 p-6 pt-4 flex flex-col gap-4">
-                            <Button
-                                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border-none"
-                                onClick={handleSubmit}
-                                disabled={loading || !isPasswordValid}
-                            >
-                                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
-                            </Button>
-                            <p className="text-center text-sm text-neutral-400">
+                        <CardFooter className="border-t border-white/10 p-6 pt-4">
+                            <p className="text-center text-sm text-neutral-400 w-full">
                                 Already have an account?{" "}
                                 <Link href="/auth/signin" className="text-blue-400 hover:text-blue-300 font-medium">
                                     Sign in

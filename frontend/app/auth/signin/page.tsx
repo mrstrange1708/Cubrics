@@ -135,18 +135,18 @@ export default function LoginPage() {
                                             required
                                         />
                                     </div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-none mt-2"
+                                        disabled={loading}
+                                    >
+                                        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
+                                    </Button>
                                 </div>
                             </form>
                         </CardContent>
-                        <CardFooter className="border-t border-white/10 p-6 pt-4 flex flex-col gap-4">
-                            <Button
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-none"
-                                onClick={handleSubmit}
-                                disabled={loading}
-                            >
-                                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
-                            </Button>
-                            <p className="text-center text-sm text-neutral-400">
+                        <CardFooter className="border-t border-white/10 p-6 pt-4">
+                            <p className="text-center text-sm text-neutral-400 w-full">
                                 Don't have an account?{" "}
                                 <Link href="/auth/signup" className="text-blue-400 hover:text-blue-300 font-medium">
                                     Sign up
@@ -154,6 +154,7 @@ export default function LoginPage() {
                             </p>
                         </CardFooter>
                     </MagicCard>
+
                 </Card>
             </div>
         </div>

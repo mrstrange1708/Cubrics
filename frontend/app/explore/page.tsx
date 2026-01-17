@@ -229,130 +229,132 @@ function ExplorePageContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto">
 
                     {/* Left Sidebar - Friend Requests & Send Request */}
-                    <aside className="lg:col-span-3 space-y-4">
-                        {/* Send Friend Request */}
-                        <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
-                            <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
-                                <UserPlus size={16} className="text-blue-400" />
-                                Add Friends
-                            </h3>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="Search username..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                    className="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-sm text-white placeholder-neutral-500 focus:border-blue-500/50 focus:outline-none"
-                                />
-                                <button
-                                    onClick={handleSearch}
-                                    disabled={isSearching}
-                                    className="px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
-                                >
-                                    <Search size={16} />
-                                </button>
-                            </div>
-
-                            {/* Search Results */}
-                            {searchResults.length > 0 && (
-                                <div className="mt-3 space-y-2">
-                                    {searchResults.map(result => (
-                                        <div key={result.id} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold">
-                                                {result.username[0].toUpperCase()}
-                                            </div>
-                                            <span className="flex-1 text-sm truncate">{result.username}</span>
-                                            <button
-                                                onClick={() => handleSendFriendRequest(result.id)}
-                                                className="p-1.5 bg-blue-600 hover:bg-blue-500 rounded-full"
-                                            >
-                                                <UserPlus size={14} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Pending Friend Requests */}
-                        <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
-                            <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
-                                <Users size={16} className="text-orange-400" />
-                                Friend Requests
-                                {pendingRequests.length > 0 && (
-                                    <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">
-                                        {pendingRequests.length}
-                                    </span>
-                                )}
-                            </h3>
-
-                            {pendingRequests.length === 0 ? (
-                                <p className="text-neutral-500 text-sm">No pending requests</p>
-                            ) : (
-                                <div className="space-y-2">
-                                    {pendingRequests.map(request => (
-                                        <div key={request.id} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-sm font-bold">
-                                                {request.sender?.username[0].toUpperCase()}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{request.sender?.username}</p>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={() => handleAcceptRequest(request.id)}
-                                                    className="p-1.5 bg-green-600 hover:bg-green-500 rounded-full"
-                                                >
-                                                    <Check size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleRejectRequest(request.id)}
-                                                    className="p-1.5 bg-red-600 hover:bg-red-500 rounded-full"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Suggestions */}
-                        {recommendations.length > 0 && (
+                    <aside className="lg:col-span-3 hidden lg:block">
+                        <div className="sticky top-24 space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pr-2">
+                            {/* Send Friend Request */}
                             <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
                                 <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
-                                    <Sparkles size={16} className="text-purple-400" />
-                                    Suggestions
+                                    <UserPlus size={16} className="text-blue-400" />
+                                    Add Friends
                                 </h3>
-                                <div className="space-y-2">
-                                    {recommendations.slice(0, 5).map(rec => (
-                                        <div key={rec.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold">
-                                                {rec.username[0].toUpperCase()}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{rec.username}</p>
-                                                {rec.bestSolve && (
-                                                    <p className="text-xs text-neutral-500">Best: {formatTime(rec.bestSolve)}</p>
-                                                )}
-                                            </div>
-                                            <button
-                                                onClick={() => handleSendFriendRequest(rec.id)}
-                                                className="p-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-full"
-                                            >
-                                                <UserPlus size={14} />
-                                            </button>
-                                        </div>
-                                    ))}
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Search username..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                        className="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-sm text-white placeholder-neutral-500 focus:border-blue-500/50 focus:outline-none"
+                                    />
+                                    <button
+                                        onClick={handleSearch}
+                                        disabled={isSearching}
+                                        className="px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
+                                    >
+                                        <Search size={16} />
+                                    </button>
                                 </div>
+
+                                {/* Search Results */}
+                                {searchResults.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        {searchResults.map(result => (
+                                            <div key={result.id} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold">
+                                                    {result.username[0].toUpperCase()}
+                                                </div>
+                                                <span className="flex-1 text-sm truncate">{result.username}</span>
+                                                <button
+                                                    onClick={() => handleSendFriendRequest(result.id)}
+                                                    className="p-1.5 bg-blue-600 hover:bg-blue-500 rounded-full"
+                                                >
+                                                    <UserPlus size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        )}
+
+                            {/* Pending Friend Requests */}
+                            <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
+                                <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
+                                    <Users size={16} className="text-orange-400" />
+                                    Friend Requests
+                                    {pendingRequests.length > 0 && (
+                                        <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">
+                                            {pendingRequests.length}
+                                        </span>
+                                    )}
+                                </h3>
+
+                                {pendingRequests.length === 0 ? (
+                                    <p className="text-neutral-500 text-sm">No pending requests</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {pendingRequests.map(request => (
+                                            <div key={request.id} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-sm font-bold">
+                                                    {request.sender?.username[0].toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium truncate">{request.sender?.username}</p>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => handleAcceptRequest(request.id)}
+                                                        className="p-1.5 bg-green-600 hover:bg-green-500 rounded-full"
+                                                    >
+                                                        <Check size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleRejectRequest(request.id)}
+                                                        className="p-1.5 bg-red-600 hover:bg-red-500 rounded-full"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Suggestions */}
+                            {recommendations.length > 0 && (
+                                <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
+                                    <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
+                                        <Sparkles size={16} className="text-purple-400" />
+                                        Suggestions
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {recommendations.slice(0, 5).map(rec => (
+                                            <div key={rec.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold">
+                                                    {rec.username[0].toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium truncate">{rec.username}</p>
+                                                    {rec.bestSolve && (
+                                                        <p className="text-xs text-neutral-500">Best: {formatTime(rec.bestSolve)}</p>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    onClick={() => handleSendFriendRequest(rec.id)}
+                                                    className="p-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-full"
+                                                >
+                                                    <UserPlus size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </aside>
 
                     {/* Main Feed */}
-                    <div className="lg:col-span-6 space-y-4">
+                    <div className="lg:col-span-6 space-y-6">
                         {/* Post Composer */}
                         <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
                             <div
@@ -443,8 +445,9 @@ function ExplorePageContent() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05 }}
                                     className={cn(
-                                        "bg-[#111] border border-white/5 rounded-2xl overflow-hidden transition-all",
-                                        post.isPinned && "border-blue-500/30 bg-blue-500/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+                                        "group bg-gradient-to-b from-[#151515] to-[#0f0f0f] border border-white/[0.08] rounded-3xl overflow-hidden transition-all duration-300",
+                                        "hover:border-white/[0.15] hover:shadow-xl hover:shadow-black/50",
+                                        post.isPinned && "border-blue-500/30 bg-gradient-to-b from-blue-950/20 to-[#0f0f0f] shadow-[0_0_30px_rgba(59,130,246,0.08)]"
                                     )}
                                 >
                                     {/* Post Header */}
@@ -453,8 +456,10 @@ function ExplorePageContent() {
                                             className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                                             onClick={() => router.push(`/profile/${post.user.id}`)}
                                         >
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg font-bold">
-                                                {post.user.username[0].toUpperCase()}
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-[2px]">
+                                                <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center text-lg font-bold">
+                                                    {post.user.username[0].toUpperCase()}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
@@ -483,35 +488,39 @@ function ExplorePageContent() {
                                     </div>
 
                                     {/* Post Content */}
-                                    <div className="px-4 pb-4">
-                                        <p className="text-neutral-200 whitespace-pre-wrap">{post.content}</p>
+                                    <div className="px-5 pb-5">
+                                        <p className="text-neutral-100 text-[15px] leading-relaxed whitespace-pre-wrap">{post.content}</p>
                                     </div>
 
                                     {/* Post Stats */}
-                                    <div className="px-4 py-2 border-t border-white/5 flex items-center justify-between text-xs text-neutral-500">
-                                        <span>{post._count.likes} likes</span>
-                                        <span>{post._count.comments} comments</span>
+                                    <div className="px-5 py-3 bg-white/[0.02] border-t border-white/5 flex items-center justify-between text-xs">
+                                        <span className="text-neutral-400">
+                                            <span className="text-white font-medium">{post._count.likes}</span> likes
+                                        </span>
+                                        <span className="text-neutral-400">
+                                            <span className="text-white font-medium">{post._count.comments}</span> comments
+                                        </span>
                                     </div>
 
                                     {/* Post Actions */}
-                                    <div className="px-4 py-2 border-t border-white/5 flex items-center justify-around">
+                                    <div className="px-4 py-3 border-t border-white/5 flex items-center justify-around">
                                         <button
                                             onClick={() => handleLikePost(post.id)}
                                             className={cn(
-                                                "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors",
+                                                "flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200",
                                                 post.likes.some(l => l.userId === user?.id)
-                                                    ? "text-red-400"
+                                                    ? "text-red-400 bg-red-500/10"
                                                     : "text-neutral-400 hover:text-white hover:bg-white/5"
                                             )}
                                         >
                                             <Heart size={18} fill={post.likes.some(l => l.userId === user?.id) ? "currentColor" : "none"} />
                                             Like
                                         </button>
-                                        <button className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                                        <button className="flex items-center gap-2 px-5 py-2.5 text-neutral-400 hover:text-white hover:bg-white/5 rounded-xl font-medium text-sm transition-all duration-200">
                                             <MessageCircle size={18} />
                                             Comment
                                         </button>
-                                        <button className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                                        <button className="flex items-center gap-2 px-5 py-2.5 text-neutral-400 hover:text-white hover:bg-white/5 rounded-xl font-medium text-sm transition-all duration-200">
                                             <Share2 size={18} />
                                             Share
                                         </button>
@@ -522,69 +531,71 @@ function ExplorePageContent() {
                     </div>
 
                     {/* Right Sidebar - Friends & Messages */}
-                    <aside className="lg:col-span-3 space-y-4">
-                        {/* Friends / Messages */}
-                        <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-sm flex items-center gap-2">
-                                    <MessageSquare size={16} className="text-green-400" />
-                                    Messages
-                                </h3>
-                                <button
-                                    onClick={() => router.push('/chat')}
-                                    className="text-xs text-blue-400 hover:text-blue-300"
-                                >
-                                    See all
-                                </button>
+                    <aside className="lg:col-span-3 hidden lg:block">
+                        <div className="sticky top-24 space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pl-2">
+                            {/* Friends / Messages */}
+                            <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-sm flex items-center gap-2">
+                                        <MessageSquare size={16} className="text-green-400" />
+                                        Messages
+                                    </h3>
+                                    <button
+                                        onClick={() => router.push('/chat')}
+                                        className="text-xs text-blue-400 hover:text-blue-300"
+                                    >
+                                        See all
+                                    </button>
+                                </div>
+
+                                {friends.length === 0 ? (
+                                    <div className="text-center py-6 text-neutral-500 text-sm">
+                                        <Users size={32} className="mx-auto mb-2 opacity-50" />
+                                        Add friends to start chatting
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {friends.slice(0, 5).map((friend) => (
+                                            <button
+                                                key={friend.id}
+                                                onClick={() => openChat(friend.id)}
+                                                className="w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors text-left"
+                                            >
+                                                <div className="relative">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-sm font-bold">
+                                                        {friend.username[0].toUpperCase()}
+                                                    </div>
+                                                    {isOnline(friend.id) && (
+                                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#111]" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-sm truncate">{friend.username}</div>
+                                                    <div className="text-xs text-neutral-500">
+                                                        {isOnline(friend.id) ? 'Online' : 'Offline'}
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
-                            {friends.length === 0 ? (
-                                <div className="text-center py-6 text-neutral-500 text-sm">
-                                    <Users size={32} className="mx-auto mb-2 opacity-50" />
-                                    Add friends to start chatting
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {friends.slice(0, 5).map((friend) => (
-                                        <button
-                                            key={friend.id}
-                                            onClick={() => openChat(friend.id)}
-                                            className="w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors text-left"
-                                        >
-                                            <div className="relative">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-sm font-bold">
-                                                    {friend.username[0].toUpperCase()}
-                                                </div>
-                                                {isOnline(friend.id) && (
-                                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#111]" />
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-sm truncate">{friend.username}</div>
-                                                <div className="text-xs text-neutral-500">
-                                                    {isOnline(friend.id) ? 'Online' : 'Offline'}
-                                                </div>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Trending */}
-                        <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
-                            <h3 className="font-bold text-sm flex items-center gap-2 mb-4">
-                                <TrendingUp size={16} className="text-orange-400" />
-                                Cubing News
-                            </h3>
-                            <div className="space-y-3 text-sm">
-                                <div className="hover:bg-white/5 p-2 rounded-lg transition-colors cursor-pointer">
-                                    <div className="font-medium">New 3x3 Record?</div>
-                                    <div className="text-xs text-neutral-500">Trending in #speedcubing</div>
-                                </div>
-                                <div className="hover:bg-white/5 p-2 rounded-lg transition-colors cursor-pointer">
-                                    <div className="font-medium">Competition Updates</div>
-                                    <div className="text-xs text-neutral-500">5.2k cubers talking</div>
+                            {/* Trending */}
+                            <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
+                                <h3 className="font-bold text-sm flex items-center gap-2 mb-4">
+                                    <TrendingUp size={16} className="text-orange-400" />
+                                    Cubing News
+                                </h3>
+                                <div className="space-y-3 text-sm">
+                                    <div className="hover:bg-white/5 p-2 rounded-lg transition-colors cursor-pointer">
+                                        <div className="font-medium">New 3x3 Record?</div>
+                                        <div className="text-xs text-neutral-500">Trending in #speedcubing</div>
+                                    </div>
+                                    <div className="hover:bg-white/5 p-2 rounded-lg transition-colors cursor-pointer">
+                                        <div className="font-medium">Competition Updates</div>
+                                        <div className="text-xs text-neutral-500">5.2k cubers talking</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
