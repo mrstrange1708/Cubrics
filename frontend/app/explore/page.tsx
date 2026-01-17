@@ -442,7 +442,10 @@ function ExplorePageContent() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden"
+                                    className={cn(
+                                        "bg-[#111] border border-white/5 rounded-2xl overflow-hidden transition-all",
+                                        post.isPinned && "border-blue-500/30 bg-blue-500/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+                                    )}
                                 >
                                     {/* Post Header */}
                                     <div className="flex items-start justify-between p-4">
@@ -454,7 +457,15 @@ function ExplorePageContent() {
                                                 {post.user.username[0].toUpperCase()}
                                             </div>
                                             <div>
-                                                <div className="font-medium hover:text-blue-400 transition-colors">{post.user.username}</div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-medium hover:text-blue-400 transition-colors">{post.user.username}</div>
+                                                    {post.isPinned && (
+                                                        <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                                            <Sparkles size={10} />
+                                                            Pinned
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="text-xs text-neutral-500 flex items-center gap-2">
                                                     {timeAgo(post.createdAt)}
                                                     {post.user.bestSolve && (

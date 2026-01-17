@@ -42,7 +42,7 @@ export default function LoginPage() {
             const data = await authApi.signin(formData);
             login(data.token, data.user);
             toast.success("Welcome back!");
-            router.push("/solver");
+            router.push("/explore");
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Invalid credentials.");
         } finally {

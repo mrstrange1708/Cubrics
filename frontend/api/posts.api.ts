@@ -30,6 +30,7 @@ export interface Post {
         likes: number;
         comments: number;
     };
+    isPinned?: boolean;
 }
 
 export const postsApi = {

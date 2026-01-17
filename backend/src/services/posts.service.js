@@ -27,6 +27,7 @@ class PostsService {
      * Get feed posts (from all users or just friends)
      */
     async getFeed(userId, limit = 20, offset = 0, friendsOnly = false) {
+        const PINNED_POST_ID = '1';
         let whereClause = {};
 
         if (friendsOnly && userId) {
@@ -41,8 +42,12 @@ class PostsService {
             whereClause = { userId: { in: friendIds } };
         }
 
-        return await prisma.post.findMany({
-            where: whereClause,
+        // Fetch the regular posts, excluding the pinned one to avoid duplicates
+        const posts = await prisma.post.findMany({
+            where: {
+                ...whereClause,
+                id: { not: PINNED_POST_ID }
+            },
             orderBy: { createdAt: 'desc' },
             take: Number(limit),
             skip: Number(offset),
@@ -67,6 +72,17 @@ class PostsService {
                 }
             }
         });
+
+        // If it's the first page, prepend the pinned post
+        if (Number(offset) === 0) {
+            const pinnedPost = await this.getPost(PINNED_POST_ID);
+            if (pinnedPost) {
+                // Add a flag to identify it's pinned in the frontend
+                return [{ ...pinnedPost, isPinned: true }, ...posts];
+            }
+        }
+
+        return posts;
     }
 
     /**
