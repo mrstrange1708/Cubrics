@@ -34,7 +34,7 @@ exports.signup = async (userData) => {
     const token = jwt.sign(
         { userId: user.id, email: user.email },
         JWT_SECRET,
-        { expiresIn: '1h' }
+        { expiresIn: '7d' }
     );
 
     return {
@@ -62,8 +62,8 @@ exports.signin = async (credentials) => {
 
     const token = jwt.sign(
         { userId: user.id, email: user.email },
-        process.env.JWT_SECRET ,
-        { expiresIn: '1h' }
+        JWT_SECRET,
+        { expiresIn: '7d' }
     );
 
     return {
