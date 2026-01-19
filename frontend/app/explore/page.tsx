@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { BackgroundRippleEffect } from '@/components/ui/background-ripple-effect';
 import {
     Heart, MessageCircle, Share2, Send, Image, Video, FileText,
     MoreHorizontal, Trophy, Users, UserPlus, MessageSquare, X,
-    Sparkles, TrendingUp, Check, UserMinus, Search
+    Sparkles, TrendingUp, Check, UserMinus, Search, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
+
+const POSTS_PER_PAGE = 5;
 
 function ExplorePageContent() {
     const router = useRouter();
@@ -30,6 +32,14 @@ function ExplorePageContent() {
     const [recommendations, setRecommendations] = useState<Friend[]>([]);
     const [userStats, setUserStats] = useState<{ rank: number; totalPlayers: number; bestSolve: number | null; percentile: number } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Lazy loading state
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [prefetchedPosts, setPrefetchedPosts] = useState<Post[]>([]);
+    const observerRef = useRef<IntersectionObserver | null>(null);
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
     // Post creation
     const [newPostContent, setNewPostContent] = useState('');
@@ -47,12 +57,92 @@ function ExplorePageContent() {
         }
     }, [user?.id]);
 
+    // Prefetch next batch of posts
+    const prefetchNextBatch = useCallback(async (currentOffset: number) => {
+        if (!user?.id || !hasMore) return;
+        try {
+            const nextBatch = await postsApi.getFeed(user.id, POSTS_PER_PAGE, currentOffset + POSTS_PER_PAGE, false);
+            setPrefetchedPosts(nextBatch);
+        } catch (error) {
+            console.error("Prefetch failed:", error);
+        }
+    }, [user?.id, hasMore]);
+
+    // Load more posts (infinite scroll)
+    const loadMorePosts = useCallback(async () => {
+        if (!user?.id || isLoadingMore || !hasMore) return;
+
+        setIsLoadingMore(true);
+        try {
+            const newOffset = offset + POSTS_PER_PAGE;
+
+            // Use prefetched posts if available
+            if (prefetchedPosts.length > 0) {
+                setPosts(prev => [...prev, ...prefetchedPosts]);
+                setOffset(newOffset);
+                setHasMore(prefetchedPosts.length === POSTS_PER_PAGE);
+                setPrefetchedPosts([]);
+                // Prefetch next batch
+                prefetchNextBatch(newOffset);
+            } else {
+                // Fetch new posts
+                const morePosts = await postsApi.getFeed(user.id, POSTS_PER_PAGE, newOffset, false);
+                if (morePosts.length > 0) {
+                    setPosts(prev => [...prev, ...morePosts]);
+                    setOffset(newOffset);
+                    setHasMore(morePosts.length === POSTS_PER_PAGE);
+                    // Prefetch next batch
+                    prefetchNextBatch(newOffset);
+                } else {
+                    setHasMore(false);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to load more posts:", error);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [user?.id, offset, isLoadingMore, hasMore, prefetchedPosts, prefetchNextBatch]);
+
+    // Setup IntersectionObserver for infinite scroll
+    useEffect(() => {
+        if (observerRef.current) observerRef.current.disconnect();
+
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+                    loadMorePosts();
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        if (loadMoreRef.current) {
+            observerRef.current.observe(loadMoreRef.current);
+        }
+
+        return () => {
+            if (observerRef.current) observerRef.current.disconnect();
+        };
+    }, [hasMore, isLoadingMore, isLoading, loadMorePosts]);
+
     const fetchData = async (userId: string) => {
         setIsLoading(true);
+        // Reset lazy loading state
+        setOffset(0);
+        setHasMore(true);
+        setPrefetchedPosts([]);
+
         try {
-            // Fetch feed
-            const feedData = await postsApi.getFeed(userId, 20, 0, false);
+            // Fetch initial batch of posts (smaller for faster load)
+            const feedData = await postsApi.getFeed(userId, POSTS_PER_PAGE, 0, false);
             setPosts(feedData);
+            setHasMore(feedData.length === POSTS_PER_PAGE);
+
+            // Prefetch next batch immediately
+            if (feedData.length === POSTS_PER_PAGE) {
+                prefetchNextBatch(0);
+            }
 
             // Fetch friends
             try {
@@ -226,6 +316,171 @@ function ExplorePageContent() {
             </div>
 
             <main className="relative z-10 container mx-auto py-24 px-4">
+                {/* Mobile Quick Actions - Shown only on mobile */}
+                <div className="lg:hidden space-y-4 mb-6">
+                    {/* Horizontal scroll for quick actions */}
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        {/* Add Friends */}
+                        <div className="flex-shrink-0 bg-[#111] border border-white/5 rounded-xl p-3 min-w-[200px]">
+                            <div className="flex items-center gap-2 mb-2">
+                                <UserPlus size={14} className="text-blue-400" />
+                                <span className="text-xs font-bold">Add Friends</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Username..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                    className="flex-1 px-2 py-1.5 bg-black/50 border border-white/10 rounded-lg text-xs text-white placeholder-neutral-500 focus:outline-none min-w-0"
+                                />
+                                <button
+                                    onClick={handleSearch}
+                                    disabled={isSearching}
+                                    className="px-2 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
+                                >
+                                    <Search size={12} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Friend Requests Badge */}
+                        {pendingRequests.length > 0 && (
+                            <div className="flex-shrink-0 bg-[#111] border border-orange-500/20 rounded-xl p-3 min-w-[160px]">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Users size={14} className="text-orange-400" />
+                                    <span className="text-xs font-bold">Requests</span>
+                                    <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px]">
+                                        {pendingRequests.length}
+                                    </span>
+                                </div>
+                                <div className="flex -space-x-2">
+                                    {pendingRequests.slice(0, 3).map(req => (
+                                        <div key={req.id} className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-xs font-bold border-2 border-[#111]">
+                                            {req.sender?.username[0].toUpperCase()}
+                                        </div>
+                                    ))}
+                                    {pendingRequests.length > 3 && (
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold border-2 border-[#111]">
+                                            +{pendingRequests.length - 3}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Messages Button */}
+                        <button
+                            onClick={() => router.push('/chat')}
+                            className="flex-shrink-0 bg-[#111] border border-white/5 rounded-xl p-3 min-w-[140px] text-left hover:bg-white/5 transition-colors"
+                        >
+                            <div className="flex items-center gap-2 mb-2">
+                                <MessageSquare size={14} className="text-green-400" />
+                                <span className="text-xs font-bold">Messages</span>
+                            </div>
+                            <div className="flex -space-x-2">
+                                {friends.slice(0, 3).map(friend => (
+                                    <div key={friend.id} className="relative">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold border-2 border-[#111]">
+                                            {friend.username[0].toUpperCase()}
+                                        </div>
+                                        {isOnline(friend.id) && (
+                                            <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-[#111]" />
+                                        )}
+                                    </div>
+                                ))}
+                                {friends.length > 3 && (
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold border-2 border-[#111]">
+                                        +{friends.length - 3}
+                                    </div>
+                                )}
+                            </div>
+                        </button>
+
+                        {/* Suggestions */}
+                        {recommendations.length > 0 && (
+                            <div className="flex-shrink-0 bg-[#111] border border-white/5 rounded-xl p-3 min-w-[160px]">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Sparkles size={14} className="text-purple-400" />
+                                    <span className="text-xs font-bold">Suggestions</span>
+                                </div>
+                                <div className="flex gap-1">
+                                    {recommendations.slice(0, 2).map(rec => (
+                                        <button
+                                            key={rec.id}
+                                            onClick={() => handleSendFriendRequest(rec.id)}
+                                            className="flex items-center gap-1 px-2 py-1 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                                        >
+                                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[8px] font-bold">
+                                                {rec.username[0].toUpperCase()}
+                                            </div>
+                                            <span className="text-[10px] truncate max-w-[50px]">{rec.username}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mobile Search Results */}
+                    {searchResults.length > 0 && (
+                        <div className="bg-[#111] border border-white/5 rounded-xl p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Search size={14} className="text-blue-400" />
+                                <span className="text-xs font-bold">Search Results</span>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto">
+                                {searchResults.map(result => (
+                                    <button
+                                        key={result.id}
+                                        onClick={() => handleSendFriendRequest(result.id)}
+                                        className="flex-shrink-0 flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold">
+                                            {result.username[0].toUpperCase()}
+                                        </div>
+                                        <span className="text-sm">{result.username}</span>
+                                        <UserPlus size={14} className="text-blue-400" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Mobile Pending Requests Expanded */}
+                    {pendingRequests.length > 0 && (
+                        <div className="bg-[#111] border border-orange-500/20 rounded-xl p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Users size={14} className="text-orange-400" />
+                                <span className="text-xs font-bold">Pending Requests</span>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto">
+                                {pendingRequests.map(request => (
+                                    <div key={request.id} className="flex-shrink-0 flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-xs font-bold">
+                                            {request.sender?.username[0].toUpperCase()}
+                                        </div>
+                                        <span className="text-sm">{request.sender?.username}</span>
+                                        <button
+                                            onClick={() => handleAcceptRequest(request.id)}
+                                            className="p-1 bg-green-600 hover:bg-green-500 rounded-full"
+                                        >
+                                            <Check size={12} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleRejectRequest(request.id)}
+                                            className="p-1 bg-red-600 hover:bg-red-500 rounded-full"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto">
 
                     {/* Left Sidebar - Friend Requests & Send Request */}
@@ -527,6 +782,28 @@ function ExplorePageContent() {
                                     </div>
                                 </motion.div>
                             ))
+                        )}
+
+                        {/* Load More Sentinel & Loading Indicator */}
+                        {!isLoading && posts.length > 0 && (
+                            <div
+                                ref={loadMoreRef}
+                                className="flex justify-center py-8"
+                            >
+                                {isLoadingMore ? (
+                                    <div className="flex items-center gap-3 text-neutral-400">
+                                        <Loader2 size={20} className="animate-spin" />
+                                        <span className="text-sm">Loading more posts...</span>
+                                    </div>
+                                ) : hasMore ? (
+                                    <div className="text-neutral-600 text-sm">Scroll for more</div>
+                                ) : (
+                                    <div className="text-neutral-500 text-sm flex items-center gap-2">
+                                        <Sparkles size={16} />
+                                        You've seen all posts
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
 

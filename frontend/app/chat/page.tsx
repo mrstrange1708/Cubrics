@@ -130,10 +130,21 @@ function ChatPageContent() {
             <main className="pt-24 h-screen">
                 <div className="h-[calc(100vh-6rem)] max-w-7xl mx-auto flex">
                     {/* Left Panel - Friends List */}
-                    <div className="w-80 border-r border-white/10 flex flex-col bg-[#111]">
+                    <div className={cn(
+                        "w-full md:w-80 border-r border-white/10 flex flex-col bg-[#111]",
+                        selectedFriend && "hidden md:flex"
+                    )}>
                         {/* Header */}
                         <div className="p-4 border-b border-white/10">
-                            <h2 className="text-lg font-bold mb-3">Messages</h2>
+                            <div className="flex items-center gap-3 mb-3">
+                                <button
+                                    onClick={() => router.push('/explore')}
+                                    className="p-2 hover:bg-white/10 rounded-full md:hidden"
+                                >
+                                    <ArrowLeft size={20} />
+                                </button>
+                                <h2 className="text-lg font-bold">Messages</h2>
+                            </div>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
                                 <input
@@ -185,7 +196,10 @@ function ChatPageContent() {
                     </div>
 
                     {/* Right Panel - Chat */}
-                    <div className="flex-1 flex flex-col bg-[#0a0a0a]">
+                    <div className={cn(
+                        "flex-1 flex flex-col bg-[#0a0a0a]",
+                        !selectedFriend && "hidden md:flex"
+                    )}>
                         {selectedFriend ? (
                             <>
                                 {/* Chat Header */}
@@ -193,7 +207,7 @@ function ChatPageContent() {
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => setSelectedFriend(null)}
-                                            className="lg:hidden p-2 hover:bg-white/10 rounded-full"
+                                            className="p-2 hover:bg-white/10 rounded-full md:hidden"
                                         >
                                             <ArrowLeft size={20} />
                                         </button>
