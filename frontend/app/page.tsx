@@ -62,7 +62,8 @@ export default function LandingPage() {
         </div>
 
         {/* Features Grid */}
-        <div className="mt-32 w-full max-w-7xl px-4">
+        <section className="mt-32 w-full max-w-7xl px-4" aria-labelledby="features-heading">
+          <h2 id="features-heading" className="sr-only">Explore Our Features</h2>
           <ul className="grid grid-cols-1 grid-rows-none gap-4 md:grid-cols-12 md:grid-rows-3 lg:gap-4 xl:max-h-[34rem] xl:grid-rows-2 text-left">
             <GridItem
               area="md:[grid-area:1/1/2/7] xl:[grid-area:1/1/2/5]"
@@ -99,7 +100,7 @@ export default function LandingPage() {
               description="Experience the cube like never before with high-end 3D visualizations and smooth animations."
             />
           </ul>
-        </div>
+        </section>
       </main>
 
       <footer className="relative z-10 mt-40 pb-10 text-neutral-600 text-sm font-mono">

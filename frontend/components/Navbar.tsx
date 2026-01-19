@@ -63,7 +63,7 @@ const Navbar = () => {
                         {!isAuthenticated && (
                             <Link href="/auth/signin" className="hidden md:block">
                                 <button className="flex items-center gap-2 px-5 py-2.5 bg-white text-black text-xs font-bold uppercase tracking-wider rounded-full hover:bg-neutral-200 transition-all hover:scale-105 active:scale-95">
-                                    Start <MoveRight size={14} />
+                                    Sign In <MoveRight size={14} />
                                 </button>
                             </Link>
                         )}
@@ -264,7 +264,7 @@ const Navbar = () => {
                                         className="block"
                                     >
                                         <button className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-neutral-200 transition-all">
-                                            Get Started <MoveRight size={16} />
+                                            Sign In to Cubrics <MoveRight size={16} />
                                         </button>
                                     </Link>
                                 )}
