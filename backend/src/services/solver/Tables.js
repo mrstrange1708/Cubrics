@@ -106,7 +106,7 @@ class Tables {
         let queue = [0];
         let depth = 0;
 
-        while (queue.length > 0 && depth < 10) {
+        while (queue.length > 0 && depth < 12) {
             let nextQueue = [];
             for (let i = 0; i < queue.length; i++) {
                 const idx = queue[i];

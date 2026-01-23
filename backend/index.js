@@ -34,6 +34,12 @@ app.set('io', io);
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 7777;
 
+// Pre-load solver tables at startup to avoid cold start delays
+console.log('[Startup] Pre-loading solver tables...');
+const tables = require('./src/services/solver/Tables');
+tables.init();
+console.log('[Startup] Solver tables ready ✅');
+
 app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true

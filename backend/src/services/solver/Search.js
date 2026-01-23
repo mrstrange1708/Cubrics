@@ -15,7 +15,7 @@ class Search {
         this.bestSolution = null;
         this.minTotalDepth = 25;
         const startTime = Date.now();
-        const MAX_TIME = 10000;
+        const MAX_TIME = 25000;
 
         const startCoord = new CoordCube(cube);
 
