@@ -229,8 +229,14 @@ class SolverService {
 
         const moves = ['U', "U'", 'U2', 'D', "D'", 'D2', 'L', "L'", 'L2', 'R', "R'", 'R2', 'F', "F'", 'F2', 'B', "B'", 'B2'];
         const sequence = [];
-        for (let i = 0; i < 20; i++) {
-            const move = moves[Math.floor(Math.random() * moves.length)];
+        let lastFace = null;
+        for (let i = 0; i < 8; i++) {
+            // Avoid consecutive moves on same face for cleaner scrambles
+            let move;
+            do {
+                move = moves[Math.floor(Math.random() * moves.length)];
+            } while (move[0] === lastFace);
+            lastFace = move[0];
             sequence.push(move);
             stickers = this.applyMove(stickers, move);
         }
