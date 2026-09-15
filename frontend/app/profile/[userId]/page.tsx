@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
+import { Skeleton, PostSkeleton } from '@/components/ui/skeleton';
 
 type Tab = 'posts' | 'liked' | 'friends';
 
@@ -51,36 +52,26 @@ function ProfilePageContent() {
     const fetchProfileData = async () => {
         setIsLoading(true);
         try {
-            // Fetch profile
-            const profileData = await userApi.getProfile(userId);
+            // All requests are independent: run them in parallel.
+            // Friendship status and rank are optional and never fail the page.
+            const [profileData, postsData, likedData, friendsData] = await Promise.all([
+                userApi.getProfile(userId),
+                userApi.getUserPosts(userId),
+                userApi.getLikedPosts(userId),
+                userApi.getUserFriends(userId),
+                currentUser?.id && currentUser.id !== userId
+                    ? friendsApi.getFriends(currentUser.id)
+                        .then(myFriends => setIsFriend(myFriends.some(f => f.id === userId)))
+                        .catch(() => setIsFriend(false))
+                    : null,
+                leaderboardApi.getUserRank(userId)
+                    .then(setUserRank)
+                    .catch(() => setUserRank(null)),
+            ]);
             setProfile(profileData);
-
-            // Fetch posts
-            const postsData = await userApi.getUserPosts(userId);
             setPosts(postsData);
-
-            // Fetch liked posts
-            const likedData = await userApi.getLikedPosts(userId);
             setLikedPosts(likedData);
-
-            // Fetch friends
-            const friendsData = await userApi.getUserFriends(userId);
             setFriends(friendsData);
-
-            // Check friendship status if not own profile
-            if (currentUser?.id && currentUser.id !== userId) {
-                try {
-                    const myFriends = await friendsApi.getFriends(currentUser.id);
-                    setIsFriend(myFriends.some(f => f.id === userId));
-                } catch { setIsFriend(false); }
-            }
-
-            // Fetch rank data
-            try {
-                const rankData = await leaderboardApi.getUserRank(userId);
-                setUserRank(rankData);
-            } catch { setUserRank(null); }
-
         } catch (error) {
             console.error("Failed to fetch profile:", error);
             toast.error('Failed to load profile');
@@ -166,9 +157,33 @@ function ProfilePageContent() {
         return (
             <div className="min-h-screen bg-[#0a0a0a] text-white">
                 <Navbar />
-                <div className="flex items-center justify-center h-screen">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                </div>
+                <main className="container mx-auto py-24 px-4 max-w-4xl" aria-busy="true" aria-label="Loading profile">
+                    {/* Header */}
+                    <div className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-6">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                            <Skeleton className="w-24 h-24 rounded-full shrink-0" />
+                            <div className="flex-1 w-full flex flex-col items-center sm:items-start gap-3">
+                                <Skeleton className="h-7 w-40" />
+                                <Skeleton className="h-4 w-64 max-w-full" />
+                                <div className="flex gap-3 mt-2">
+                                    <Skeleton className="h-8 w-28 rounded-full" />
+                                    <Skeleton className="h-8 w-24 rounded-full" />
+                                    <Skeleton className="h-8 w-24 rounded-full" />
+                                </div>
+                                <Skeleton className="h-10 w-32 rounded-lg mt-2" />
+                            </div>
+                        </div>
+                    </div>
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-6">
+                        {[0, 1, 2].map(i => <Skeleton key={i} className="h-11 w-28 rounded-xl" />)}
+                    </div>
+                    {/* Posts */}
+                    <div className="space-y-4">
+                        <PostSkeleton />
+                        <PostSkeleton />
+                    </div>
+                </main>
             </div>
         );
     }

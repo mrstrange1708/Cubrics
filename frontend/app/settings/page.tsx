@@ -15,6 +15,7 @@ import { Post, postsApi } from '@/api/posts.api';
 import { toast } from 'sonner';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function SettingsPageContent() {
     const router = useRouter();
@@ -53,12 +54,13 @@ function SettingsPageContent() {
         if (!user?.id) return;
         setIsLoading(true);
         try {
-            const profileData = await userApi.getProfile(user.id);
+            const [profileData, postsData] = await Promise.all([
+                userApi.getProfile(user.id),
+                userApi.getUserPosts(user.id),
+            ]);
             setProfile(profileData);
             setUsername(profileData.username);
             setBio(profileData.bio || '');
-
-            const postsData = await userApi.getUserPosts(user.id);
             setPosts(postsData);
         } catch (error) {
             console.error("Failed to fetch data:", error);
@@ -123,9 +125,30 @@ function SettingsPageContent() {
         return (
             <div className="min-h-screen bg-[#0a0a0a] text-white">
                 <Navbar />
-                <div className="flex items-center justify-center h-screen">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                </div>
+                <main className="container mx-auto py-24 px-4 max-w-2xl" aria-busy="true" aria-label="Loading settings">
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-8">
+                        <Skeleton className="w-9 h-9 rounded-lg" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-7 w-32" />
+                            <Skeleton className="h-4 w-48" />
+                        </div>
+                    </div>
+                    {/* Edit profile form */}
+                    <div className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-6 space-y-4">
+                        <Skeleton className="h-6 w-32 mb-2" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-12 w-full rounded-xl" />
+                        <Skeleton className="h-4 w-12" />
+                        <Skeleton className="h-24 w-full rounded-xl" />
+                        <Skeleton className="h-11 w-full rounded-xl" />
+                    </div>
+                    {/* Posts list */}
+                    <div className="bg-[#111] border border-white/5 rounded-2xl p-6 space-y-3">
+                        <Skeleton className="h-6 w-28 mb-2" />
+                        {[0, 1, 2].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+                    </div>
+                </main>
             </div>
         );
     }

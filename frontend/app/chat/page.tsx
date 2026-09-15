@@ -11,6 +11,7 @@ import { messagesApi, Message } from '@/api/messages.api';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { Skeleton, UserRowSkeleton } from '@/components/ui/skeleton';
 
 function ChatPageContent() {
     const router = useRouter();
@@ -24,6 +25,7 @@ function ChatPageContent() {
     const [newMessage, setNewMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -85,13 +87,19 @@ function ChatPageContent() {
         setSelectedFriend(friend);
         if (!user?.id) return;
 
+        // Clear the previous conversation so it doesn't flash under the new friend
+        setMessages([]);
+        setIsLoadingMessages(true);
         try {
             const msgs = await messagesApi.getConversation(user.id, friend.id);
             setMessages(msgs);
+            setIsLoadingMessages(false);
             await messagesApi.markAsRead(friend.id, user.id);
         } catch (error) {
             console.error('Failed to load messages:', error);
             setMessages([]);
+        } finally {
+            setIsLoadingMessages(false);
         }
 
         inputRef.current?.focus();
@@ -160,7 +168,9 @@ function ChatPageContent() {
                         {/* Friends */}
                         <div className="flex-1 overflow-y-auto">
                             {isLoading ? (
-                                <div className="p-4 text-center text-neutral-500 text-sm">Loading...</div>
+                                <div aria-busy="true" aria-label="Loading friends">
+                                    {[0, 1, 2, 3, 4].map(i => <UserRowSkeleton key={i} avatar="w-12 h-12" className="p-3" />)}
+                                </div>
                             ) : filteredFriends.length === 0 ? (
                                 <div className="p-4 text-center text-neutral-500 text-sm">
                                     No friends yet. Add friends from Explore page!
@@ -243,7 +253,15 @@ function ChatPageContent() {
 
                                 {/* Messages */}
                                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                                    {messages.length === 0 ? (
+                                    {isLoadingMessages ? (
+                                        <div className="space-y-3" aria-busy="true" aria-label="Loading messages">
+                                            {['w-40', 'w-56', 'w-32', 'w-48', 'w-36'].map((w, i) => (
+                                                <div key={i} className={cn("flex", i % 2 ? "justify-end" : "justify-start")}>
+                                                    <Skeleton className={cn("h-12 rounded-2xl", w)} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : messages.length === 0 ? (
                                         <div className="h-full flex items-center justify-center">
                                             <div className="text-center text-neutral-500">
                                                 <p className="text-lg mb-1">No messages yet</p>

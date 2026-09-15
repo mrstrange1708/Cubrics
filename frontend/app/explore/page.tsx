@@ -7,7 +7,7 @@ import { BackgroundRippleEffect } from '@/components/ui/background-ripple-effect
 import {
     Heart, MessageCircle, Share2, Send, Image, Video, FileText,
     MoreHorizontal, Trophy, Users, UserPlus, MessageSquare, X,
-    Sparkles, TrendingUp, Check, UserMinus, Search, Loader2
+    Sparkles, TrendingUp, Check, UserMinus, Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
+import { PostSkeleton, UserRowSkeleton } from '@/components/ui/skeleton';
 
 const POSTS_PER_PAGE = 5;
 
@@ -32,6 +33,7 @@ function ExplorePageContent() {
     const [recommendations, setRecommendations] = useState<Friend[]>([]);
     const [userStats, setUserStats] = useState<{ rank: number; totalPlayers: number; bestSolve: number | null; percentile: number } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSidebarLoading, setIsSidebarLoading] = useState(true);
 
     // Lazy loading state
     const [offset, setOffset] = useState(0);
@@ -134,9 +136,12 @@ function ExplorePageContent() {
         setPrefetchedPosts([]);
 
         // Sidebar data loads in parallel and never blocks the feed
-        friendsApi.getFriends(userId).then(setFriends).catch(() => setFriends([]));
-        friendsApi.getPendingRequests(userId).then(setPendingRequests).catch(() => setPendingRequests([]));
-        friendsApi.getRecommendations(userId).then(setRecommendations).catch(() => setRecommendations([]));
+        setIsSidebarLoading(true);
+        Promise.allSettled([
+            friendsApi.getFriends(userId).then(setFriends).catch(() => setFriends([])),
+            friendsApi.getPendingRequests(userId).then(setPendingRequests).catch(() => setPendingRequests([])),
+            friendsApi.getRecommendations(userId).then(setRecommendations).catch(() => setRecommendations([])),
+        ]).then(() => setIsSidebarLoading(false));
         leaderboardApi.getUserRank(userId)
             .then(rankData => setUserStats({
                 rank: rankData.rank,
@@ -524,7 +529,12 @@ function ExplorePageContent() {
                                     )}
                                 </h3>
 
-                                {pendingRequests.length === 0 ? (
+                                {isSidebarLoading ? (
+                                    <div className="space-y-1">
+                                        <UserRowSkeleton />
+                                        <UserRowSkeleton />
+                                    </div>
+                                ) : pendingRequests.length === 0 ? (
                                     <p className="text-neutral-500 text-sm">No pending requests</p>
                                 ) : (
                                     <div className="space-y-2">
@@ -557,6 +567,17 @@ function ExplorePageContent() {
                             </div>
 
                             {/* Suggestions */}
+                            {isSidebarLoading && (
+                                <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
+                                    <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
+                                        <Sparkles size={16} className="text-purple-400" />
+                                        Suggestions
+                                    </h3>
+                                    <div className="space-y-1">
+                                        {[0, 1, 2].map(i => <UserRowSkeleton key={i} />)}
+                                    </div>
+                                </div>
+                            )}
                             {recommendations.length > 0 && (
                                 <div className="bg-[#111] border border-white/5 rounded-2xl p-4">
                                     <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
@@ -664,8 +685,10 @@ function ExplorePageContent() {
 
                         {/* Posts */}
                         {isLoading ? (
-                            <div className="flex justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                            <div className="space-y-6" aria-busy="true" aria-label="Loading posts">
+                                <PostSkeleton />
+                                <PostSkeleton />
+                                <PostSkeleton />
                             </div>
                         ) : posts.length === 0 ? (
                             <div className="bg-[#111] border border-white/5 rounded-2xl p-12 text-center">
@@ -772,9 +795,8 @@ function ExplorePageContent() {
                                 className="flex justify-center py-8"
                             >
                                 {isLoadingMore ? (
-                                    <div className="flex items-center gap-3 text-neutral-400">
-                                        <Loader2 size={20} className="animate-spin" />
-                                        <span className="text-sm">Loading more posts...</span>
+                                    <div className="w-full" aria-busy="true" aria-label="Loading more posts">
+                                        <PostSkeleton />
                                     </div>
                                 ) : hasMore ? (
                                     <div className="text-neutral-600 text-sm">Scroll for more</div>
@@ -806,7 +828,11 @@ function ExplorePageContent() {
                                     </button>
                                 </div>
 
-                                {friends.length === 0 ? (
+                                {isSidebarLoading ? (
+                                    <div className="space-y-1">
+                                        {[0, 1, 2].map(i => <UserRowSkeleton key={i} />)}
+                                    </div>
+                                ) : friends.length === 0 ? (
                                     <div className="text-center py-6 text-neutral-500 text-sm">
                                         <Users size={32} className="mx-auto mb-2 opacity-50" />
                                         Add friends to start chatting

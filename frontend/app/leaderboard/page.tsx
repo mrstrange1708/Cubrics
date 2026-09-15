@@ -10,6 +10,7 @@ import { leaderboardApi, LeaderboardUser, UserRankData } from '@/api/leaderboard
 import { friendsApi, FriendWithTimes } from '@/api/friends.api';
 import { timerApi, TimerRecord } from '@/api/timer.api';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { Skeleton, TableRowSkeleton } from '@/components/ui/skeleton';
 
 type TabType = 'myBest' | 'friends' | 'global';
 
@@ -31,28 +32,14 @@ function LeaderboardPageContent() {
                 const userId = localStorage.getItem('Cubrics_user_id');
                 setCurrentUserId(userId);
 
-                // Fetch Global Leaderboard
-                const data = await leaderboardApi.getGlobalLeaderboard(100);
-                setLeaderboard(data);
-
-                if (userId) {
-                    // Fetch User Rank
-                    const rankData = await leaderboardApi.getUserRank(userId);
-                    setUserRankData(rankData);
-
-                    // Fetch User's Times
-                    const times = await timerApi.getUserHistory(userId, 50);
-                    setMyTimes(times);
-
-                    // Fetch Friends Data
-                    try {
-                        const friends = await friendsApi.getFriendsWithTimes(userId);
-                        setFriendsData(friends);
-                    } catch {
-                        // No friends yet
-                        setFriendsData([]);
-                    }
-                }
+                // All four requests are independent: run them in parallel
+                await Promise.all([
+                    leaderboardApi.getGlobalLeaderboard(100).then(setLeaderboard),
+                    userId && leaderboardApi.getUserRank(userId).then(setUserRankData).catch(() => setUserRankData(null)),
+                    userId && timerApi.getUserHistory(userId, 50).then(setMyTimes).catch(() => setMyTimes([])),
+                    // No friends yet → empty list
+                    userId && friendsApi.getFriendsWithTimes(userId).then(setFriendsData).catch(() => setFriendsData([])),
+                ]);
             } catch (error) {
                 console.error("Failed to fetch leaderboard", error);
             } finally {
@@ -128,6 +115,9 @@ function LeaderboardPageContent() {
                 </div>
 
                 {/* User's Rank Card */}
+                {isLoading && (
+                    <Skeleton className="mb-8 h-[92px] w-full rounded-xl" />
+                )}
                 {userRankData && userRankData.rank && currentUserId && (
                     <motion.div
                         initial={{ y: 20, opacity: 0 }}
@@ -213,7 +203,9 @@ function LeaderboardPageContent() {
                                 <div className="col-span-4 text-right">Date</div>
                             </div>
 
-                            {myTimes.length === 0 && (
+                            {isLoading && <TableRowSkeleton />}
+
+                            {!isLoading && myTimes.length === 0 && (
                                 <div className="p-16 text-center">
                                     <Clock size={48} className="mx-auto text-neutral-600 mb-4" />
                                     <div className="text-neutral-400 font-medium">No solves yet</div>
@@ -261,7 +253,9 @@ function LeaderboardPageContent() {
                                 <div className="hidden md:block md:col-span-3 text-right">Solves</div>
                             </div>
 
-                            {friendsData.length === 0 && (
+                            {isLoading && <TableRowSkeleton />}
+
+                            {!isLoading && friendsData.length === 0 && (
                                 <div className="p-16 text-center">
                                     <Users size={48} className="mx-auto text-neutral-600 mb-4" />
                                     <div className="text-neutral-400 font-medium">No friends yet</div>
@@ -317,11 +311,7 @@ function LeaderboardPageContent() {
                                 <div className="hidden md:block md:col-span-3 text-right">Solves</div>
                             </div>
 
-                            {isLoading && (
-                                <div className="p-12 flex justify-center">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                                </div>
-                            )}
+                            {isLoading && <TableRowSkeleton rows={10} />}
 
                             {!isLoading && leaderboard.map((user, index) => {
                                 const isMe = user.id === currentUserId;
