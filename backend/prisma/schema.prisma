@@ -54,6 +54,7 @@ model FriendRequest {
   createdAt  DateTime @default(now())
 
   @@unique([senderId, receiverId])
+  @@index([receiverId, status])
 }
 
 model Friendship {
@@ -77,6 +78,9 @@ model Post {
 
   comments Comment[]
   likes    Like[]
+
+  @@index([createdAt]) // explore feed ordering
+  @@index([userId, createdAt]) // profile posts
 }
 
 model Comment {
@@ -87,6 +91,8 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id])
   content   String
   createdAt DateTime @default(now())
+
+  @@index([postId])
 }
 
 model Like {
@@ -98,6 +104,7 @@ model Like {
   createdAt DateTime @default(now())
 
   @@unique([postId, userId])
+  @@index([userId, createdAt]) // liked posts
 }
 
 model Message {
@@ -111,4 +118,5 @@ model Message {
   createdAt  DateTime @default(now())
 
   @@index([senderId, receiverId])
+  @@index([receiverId, read]) // unread counts
 }

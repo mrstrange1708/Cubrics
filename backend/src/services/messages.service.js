@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 class MessagesService {
     /**
@@ -48,28 +47,36 @@ class MessagesService {
      * Get all conversations for a user (latest message from each)
      */
     async getConversations(userId) {
-        // Get all unique conversation partners
-        const sentMessages = await prisma.message.findMany({
-            where: { senderId: userId },
-            distinct: ['receiverId'],
-            orderBy: { createdAt: 'desc' },
-            include: {
-                receiver: {
-                    select: { id: true, username: true, avatar: true }
+        // Latest sent, latest received, and unread counts: 3 queries in parallel
+        const [sentMessages, receivedMessages, unreadGroups] = await Promise.all([
+            prisma.message.findMany({
+                where: { senderId: userId },
+                distinct: ['receiverId'],
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    receiver: {
+                        select: { id: true, username: true, avatar: true }
+                    }
                 }
-            }
-        });
+            }),
+            prisma.message.findMany({
+                where: { receiverId: userId },
+                distinct: ['senderId'],
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    sender: {
+                        select: { id: true, username: true, avatar: true }
+                    }
+                }
+            }),
+            prisma.message.groupBy({
+                by: ['senderId'],
+                where: { receiverId: userId, read: false },
+                _count: { _all: true }
+            })
+        ]);
 
-        const receivedMessages = await prisma.message.findMany({
-            where: { receiverId: userId },
-            distinct: ['senderId'],
-            orderBy: { createdAt: 'desc' },
-            include: {
-                sender: {
-                    select: { id: true, username: true, avatar: true }
-                }
-            }
-        });
+        const unreadBySender = new Map(unreadGroups.map(g => [g.senderId, g._count._all]));
 
         // Combine and deduplicate
         const conversations = new Map();
@@ -78,24 +85,17 @@ class MessagesService {
             conversations.set(msg.receiverId, {
                 user: msg.receiver,
                 lastMessage: msg,
-                unreadCount: 0
+                unreadCount: unreadBySender.get(msg.receiverId) || 0
             });
         }
 
         for (const msg of receivedMessages) {
             if (!conversations.has(msg.senderId) ||
                 new Date(msg.createdAt) > new Date(conversations.get(msg.senderId).lastMessage.createdAt)) {
-                const unreadCount = await prisma.message.count({
-                    where: {
-                        senderId: msg.senderId,
-                        receiverId: userId,
-                        read: false
-                    }
-                });
                 conversations.set(msg.senderId, {
                     user: msg.sender,
                     lastMessage: msg,
-                    unreadCount
+                    unreadCount: unreadBySender.get(msg.senderId) || 0
                 });
             }
         }

@@ -5,9 +5,10 @@ const router = express.Router();
 // POST /posts - Create a new post
 router.post('/', async (req, res) => {
     try {
-        const { userId, content, timerRecordId } = req.body;
-        if (!userId || !content) {
-            return res.status(400).json({ error: "userId and content required" });
+        const userId = req.user.userId;
+        const { content, timerRecordId } = req.body;
+        if (!content) {
+            return res.status(400).json({ error: "content required" });
         }
         const post = await postsService.createPost(userId, content, timerRecordId);
         res.json(post);
@@ -20,9 +21,9 @@ router.post('/', async (req, res) => {
 // GET /posts/feed - Get feed posts
 router.get('/feed', async (req, res) => {
     try {
-        const { userId, limit, offset, friendsOnly } = req.query;
+        const { limit, offset, friendsOnly } = req.query;
         const posts = await postsService.getFeed(
-            userId,
+            req.user.userId,
             limit || 20,
             offset || 0,
             friendsOnly === 'true'
@@ -37,7 +38,7 @@ router.get('/feed', async (req, res) => {
 // GET /posts/:postId - Get single post
 router.get('/:postId', async (req, res) => {
     try {
-        const post = await postsService.getPost(req.params.postId);
+        const post = await postsService.getPost(req.params.postId, req.user.userId);
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });
         }
@@ -51,11 +52,7 @@ router.get('/:postId', async (req, res) => {
 // POST /posts/:postId/like - Like/unlike a post
 router.post('/:postId/like', async (req, res) => {
     try {
-        const { userId } = req.body;
-        if (!userId) {
-            return res.status(400).json({ error: "userId required" });
-        }
-        const result = await postsService.likePost(req.params.postId, userId);
+        const result = await postsService.likePost(req.params.postId, req.user.userId);
         res.json(result);
     } catch (error) {
         console.error("Like Post Error:", error);
@@ -66,11 +63,11 @@ router.post('/:postId/like', async (req, res) => {
 // POST /posts/:postId/comment - Add comment
 router.post('/:postId/comment', async (req, res) => {
     try {
-        const { userId, content } = req.body;
-        if (!userId || !content) {
-            return res.status(400).json({ error: "userId and content required" });
+        const { content } = req.body;
+        if (!content) {
+            return res.status(400).json({ error: "content required" });
         }
-        const comment = await postsService.addComment(req.params.postId, userId, content);
+        const comment = await postsService.addComment(req.params.postId, req.user.userId, content);
         res.json(comment);
     } catch (error) {
         console.error("Add Comment Error:", error);
@@ -81,8 +78,7 @@ router.post('/:postId/comment', async (req, res) => {
 // DELETE /posts/:postId - Delete a post
 router.delete('/:postId', async (req, res) => {
     try {
-        const { userId } = req.body;
-        await postsService.deletePost(req.params.postId, userId);
+        await postsService.deletePost(req.params.postId, req.user.userId);
         res.json({ success: true });
     } catch (error) {
         console.error("Delete Post Error:", error);
@@ -93,8 +89,7 @@ router.delete('/:postId', async (req, res) => {
 // DELETE /posts/comment/:commentId - Delete a comment
 router.delete('/comment/:commentId', async (req, res) => {
     try {
-        const { userId } = req.body;
-        await postsService.deleteComment(req.params.commentId, userId);
+        await postsService.deleteComment(req.params.commentId, req.user.userId);
         res.json({ success: true });
     } catch (error) {
         console.error("Delete Comment Error:", error);

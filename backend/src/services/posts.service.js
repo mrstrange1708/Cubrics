@@ -1,5 +1,19 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
+
+// Shared post shape for lists. `likes` holds at most the viewer's own like,
+// so the client's `likes.some(l => l.userId === me)` check keeps working.
+const feedInclude = (viewerId) => ({
+    user: {
+        select: { id: true, username: true, avatar: true, bestSolve: true }
+    },
+    likes: {
+        where: { userId: viewerId ?? '' },
+        select: { userId: true }
+    },
+    _count: {
+        select: { likes: true, comments: true }
+    }
+});
 
 class PostsService {
     /**
@@ -12,89 +26,67 @@ class PostsService {
                 content,
                 timerRecordId
             },
-            include: {
-                user: {
-                    select: { id: true, username: true, avatar: true }
-                },
-                _count: {
-                    select: { likes: true, comments: true }
-                }
-            }
+            // Same shape as feed posts so the client can prepend it directly
+            include: feedInclude(userId)
         });
     }
 
     /**
-     * Get feed posts (from all users or just friends)
+     * Get feed posts (from all users or just friends).
+     * Lean payload: the feed UI only needs counts and whether the viewer liked
+     * each post, so comments and the full likes list are not loaded.
      */
-    async getFeed(userId, limit = 20, offset = 0, friendsOnly = false) {
+    async getFeed(viewerId, limit = 20, offset = 0, friendsOnly = false) {
         const PINNED_POST_ID = '1';
         let whereClause = {};
 
-        if (friendsOnly && userId) {
-            // Get friend IDs
+        if (friendsOnly && viewerId) {
             const friendships = await prisma.friendship.findMany({
-                where: { userId },
+                where: { userId: viewerId },
                 select: { friendId: true }
             });
             const friendIds = friendships.map(f => f.friendId);
-            friendIds.push(userId); // Include own posts
+            friendIds.push(viewerId); // Include own posts
 
             whereClause = { userId: { in: friendIds } };
         }
 
-        // Fetch the regular posts, excluding the pinned one to avoid duplicates
-        const posts = await prisma.post.findMany({
-            where: {
-                ...whereClause,
-                id: { not: PINNED_POST_ID }
-            },
-            orderBy: { createdAt: 'desc' },
-            take: Number(limit),
-            skip: Number(offset),
-            include: {
-                user: {
-                    select: { id: true, username: true, avatar: true, bestSolve: true }
-                },
-                comments: {
-                    take: 3,
-                    orderBy: { createdAt: 'desc' },
-                    include: {
-                        user: {
-                            select: { id: true, username: true, avatar: true }
-                        }
-                    }
-                },
-                likes: {
-                    select: { userId: true }
-                },
-                _count: {
-                    select: { likes: true, comments: true }
-                }
-            }
-        });
+        const include = feedInclude(viewerId);
+        const isFirstPage = Number(offset) === 0;
 
-        // If it's the first page, prepend the pinned post
-        if (Number(offset) === 0) {
-            const pinnedPost = await this.getPost(PINNED_POST_ID);
-            if (pinnedPost) {
-                // Add a flag to identify it's pinned in the frontend
-                return [{ ...pinnedPost, isPinned: true }, ...posts];
-            }
+        // Regular posts and the pinned post are independent: query in parallel
+        const [posts, pinnedPost] = await Promise.all([
+            prisma.post.findMany({
+                where: {
+                    ...whereClause,
+                    id: { not: PINNED_POST_ID }
+                },
+                orderBy: { createdAt: 'desc' },
+                take: Number(limit),
+                skip: Number(offset),
+                include
+            }),
+            isFirstPage
+                ? prisma.post.findUnique({ where: { id: PINNED_POST_ID }, include })
+                : null
+        ]);
+
+        if (pinnedPost) {
+            // Add a flag to identify it's pinned in the frontend
+            return [{ ...pinnedPost, isPinned: true }, ...posts];
         }
 
         return posts;
     }
 
     /**
-     * Get single post by ID
+     * Get single post by ID (with all comments)
      */
-    async getPost(postId) {
+    async getPost(postId, viewerId) {
         return await prisma.post.findUnique({
             where: { id: postId },
             include: {
-                user: {
-                    select: { id: true, username: true, avatar: true }
-                },
+                ...feedInclude(viewerId),
                 comments: {
                     orderBy: { createdAt: 'asc' },
                     include: {
@@ -102,12 +94,6 @@ class PostsService {
                             select: { id: true, username: true, avatar: true }
                         }
                     }
-                },
-                likes: {
-                    select: { userId: true }
-                },
-                _count: {
-                    select: { likes: true, comments: true }
                 }
             }
         });
@@ -193,3 +179,4 @@ class PostsService {
 }
 
 module.exports = new PostsService();
+module.exports.feedInclude = feedInclude;

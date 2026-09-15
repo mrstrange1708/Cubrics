@@ -13,9 +13,13 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Show the intro animation once per browser session, not on every visit
+    let seen = false;
+    try { seen = sessionStorage.getItem('preloaderSeen') === '1'; } catch {}
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 2600);
+      try { sessionStorage.setItem('preloaderSeen', '1'); } catch {}
+    }, seen ? 0 : 2600);
     return () => clearTimeout(timer);
   }, []);
 

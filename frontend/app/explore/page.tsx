@@ -133,48 +133,29 @@ function ExplorePageContent() {
         setHasMore(true);
         setPrefetchedPosts([]);
 
+        // Sidebar data loads in parallel and never blocks the feed
+        friendsApi.getFriends(userId).then(setFriends).catch(() => setFriends([]));
+        friendsApi.getPendingRequests(userId).then(setPendingRequests).catch(() => setPendingRequests([]));
+        friendsApi.getRecommendations(userId).then(setRecommendations).catch(() => setRecommendations([]));
+        leaderboardApi.getUserRank(userId)
+            .then(rankData => setUserStats({
+                rank: rankData.rank,
+                totalPlayers: rankData.totalPlayers,
+                bestSolve: rankData.bestSolve,
+                percentile: rankData.percentile
+            }))
+            .catch(() => setUserStats(null));
+
         try {
-            // Fetch initial batch of posts (smaller for faster load)
             const feedData = await postsApi.getFeed(userId, POSTS_PER_PAGE, 0, false);
             setPosts(feedData);
-            setHasMore(feedData.length === POSTS_PER_PAGE);
 
-            // Prefetch next batch immediately
-            if (feedData.length === POSTS_PER_PAGE) {
-                prefetchNextBatch(0);
-            }
-
-            // Fetch friends
-            try {
-                const friendsData = await friendsApi.getFriends(userId);
-                setFriends(friendsData);
-            } catch { setFriends([]); }
-
-            // Fetch pending requests (received)
-            try {
-                const requests = await friendsApi.getPendingRequests(userId);
-                setPendingRequests(requests);
-            } catch { setPendingRequests([]); }
-
-            // Fetch recommendations
-            try {
-                const recsData = await friendsApi.getRecommendations(userId);
-                setRecommendations(recsData);
-            } catch { setRecommendations([]); }
-
-            // Fetch user stats
-            try {
-                const rankData = await leaderboardApi.getUserRank(userId);
-                setUserStats({
-                    rank: rankData.rank,
-                    totalPlayers: rankData.totalPlayers,
-                    bestSolve: rankData.bestSolve,
-                    percentile: rankData.percentile
-                });
-            } catch { setUserStats(null); }
-
+            // The first page also carries the pinned post, which isn't part of the page count
+            const pageFull = feedData.filter(p => !p.isPinned).length === POSTS_PER_PAGE;
+            setHasMore(pageFull);
+            if (pageFull) prefetchNextBatch(0);
         } catch (error) {
-            console.error("Failed to fetch data:", error);
+            console.error("Failed to fetch feed:", error);
         } finally {
             setIsLoading(false);
         }

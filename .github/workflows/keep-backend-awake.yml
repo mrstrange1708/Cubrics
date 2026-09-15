@@ -1,0 +1,19 @@
+# Pings the backend so free-tier hosts (e.g. Render sleeps after 15 min idle)
+# don't put it to sleep and make the next visitor wait for a cold start.
+# Setup: repo Settings → Secrets and variables → Actions → Variables → BACKEND_URL
+# (e.g. https://your-backend.onrender.com). Skips quietly until it's set.
+name: Keep backend awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    if: ${{ vars.BACKEND_URL != '' }}
+    steps:
+      - run: curl -fsS --max-time 90 --retry 2 "$BACKEND_URL/health"
+        env:
+          BACKEND_URL: ${{ vars.BACKEND_URL }}

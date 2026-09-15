@@ -85,4 +85,15 @@ const optionalAuthMiddleware = (req, res, next) => {
     }
 };
 
-module.exports = { authMiddleware, optionalAuthMiddleware };
+/**
+ * Only lets the logged-in user act on their own `:param` (default `:userId`).
+ * Use after authMiddleware.
+ */
+const requireSelf = (param = 'userId') => (req, res, next) => {
+    if (req.params[param] !== req.user?.userId) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+};
+
+module.exports = { authMiddleware, optionalAuthMiddleware, requireSelf };

@@ -1,10 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient({
-    transactionOptions: {
-        maxWait: 10000,  // 10 seconds max wait to start transaction
-        timeout: 20000,  // 20 seconds transaction timeout
-    }
-});
+const prisma = require('../lib/prisma');
 
 class TimerService {
     /**

@@ -42,6 +42,8 @@ const Navbar = () => {
                                 src="/logo.png"
                                 alt="Cubrics Logo"
                                 fill
+                                sizes="32px"
+                                priority
                                 className="object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                         </div>

@@ -94,6 +94,7 @@ export default function LearnPage() {
                                 src="/assets/learn/cube-pieces.png"
                                 alt="Cube Pieces - Centers, Corners, and Edges"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain"
                                 priority
                             />
@@ -130,6 +131,7 @@ export default function LearnPage() {
                                 src="/assets/learn/rubik-guide.png"
                                 alt="Rubik's Cube Notation"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain p-4"
                             />
                         </div>
@@ -165,6 +167,7 @@ export default function LearnPage() {
                             src="/assets/learn/cube-layers.png"
                             alt="Cube Layers"
                             fill
+                            sizes="(max-width: 896px) 100vw, 896px"
                             className="object-contain"
                         />
                     </div>
@@ -196,6 +199,7 @@ export default function LearnPage() {
                         src="/assets/learn/solve-progression.png"
                         alt="Solving Progression"
                         fill
+                        sizes="(max-width: 896px) 100vw, 896px"
                         className="object-contain p-6 pt-20"
                     />
                 </div>
@@ -215,6 +219,7 @@ export default function LearnPage() {
                                 src="/assets/learn/white-cross.png"
                                 alt="White Cross"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain"
                             />
                         </div>
@@ -238,6 +243,7 @@ export default function LearnPage() {
                                 src="/assets/learn/white-corners.png"
                                 alt="White Corners Algorithm"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain"
                             />
                         </div>
@@ -297,6 +303,7 @@ export default function LearnPage() {
                                 src="/assets/learn/second-layer-result.png"
                                 alt="Second Layer Result"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain"
                             />
                         </div>
@@ -318,6 +325,7 @@ export default function LearnPage() {
                                 src="/assets/learn/second-layer-result.png"
                                 alt="Last Layer Starting State"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain"
                             />
                         </div>
@@ -337,6 +345,7 @@ export default function LearnPage() {
                                 src="/assets/learn/yellow-cross-detailed.png"
                                 alt="Yellow Cross Guide"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain p-2"
                             />
                         </div>
@@ -362,6 +371,7 @@ export default function LearnPage() {
                                 src="/assets/learn/edge-permutation.png"
                                 alt="Edge Permutation"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain p-2"
                             />
                         </div>
@@ -386,6 +396,7 @@ export default function LearnPage() {
                                 src="/assets/learn/corner-orientation-guide.png"
                                 alt="Corner Permutation"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain p-2"
                             />
                         </div>
@@ -411,6 +422,7 @@ export default function LearnPage() {
                                 src="/assets/learn/solved-cube.png"
                                 alt="Corner Orientation"
                                 fill
+                                sizes="(max-width: 896px) 100vw, 896px"
                                 className="object-contain p-2"
                             />
                         </div>
@@ -445,6 +457,7 @@ export default function LearnPage() {
                                     src="/assets/learn/profile-img.png"
                                     alt="Shaik Junaid Sami"
                                     fill
+                                    sizes="128px"
                                     className="object-cover rounded-full ring-4 ring-blue-500/20"
                                 />
                             </div>

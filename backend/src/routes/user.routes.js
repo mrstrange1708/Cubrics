@@ -1,11 +1,12 @@
 const express = require('express');
 const userService = require('../services/user.service');
+const { requireSelf } = require('../middleware/auth.middleware');
 const router = express.Router();
 
 // GET /users/:userId/profile - Get user profile
 router.get('/:userId/profile', async (req, res) => {
     try {
-        const profile = await userService.getProfile(req.params.userId);
+        const profile = await userService.getProfile(req.params.userId, req.user.userId);
         res.json(profile);
     } catch (error) {
         console.error("Get Profile Error:", error);
@@ -17,7 +18,7 @@ router.get('/:userId/profile', async (req, res) => {
 });
 
 // PUT /users/:userId/profile - Update profile
-router.put('/:userId/profile', async (req, res) => {
+router.put('/:userId/profile', requireSelf(), async (req, res) => {
     try {
         const { username, bio } = req.body;
         const updated = await userService.updateProfile(req.params.userId, { username, bio });
@@ -35,7 +36,7 @@ router.put('/:userId/profile', async (req, res) => {
 router.get('/:userId/posts', async (req, res) => {
     try {
         const { limit, offset } = req.query;
-        const posts = await userService.getUserPosts(req.params.userId, limit, offset);
+        const posts = await userService.getUserPosts(req.params.userId, req.user.userId, limit, offset);
         res.json(posts);
     } catch (error) {
         console.error("Get User Posts Error:", error);
@@ -47,7 +48,7 @@ router.get('/:userId/posts', async (req, res) => {
 router.get('/:userId/liked', async (req, res) => {
     try {
         const { limit, offset } = req.query;
-        const posts = await userService.getLikedPosts(req.params.userId, limit, offset);
+        const posts = await userService.getLikedPosts(req.params.userId, req.user.userId, limit, offset);
         res.json(posts);
     } catch (error) {
         console.error("Get Liked Posts Error:", error);

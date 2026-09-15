@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 class LeaderboardService {
     async getGlobalLeaderboard(limit = 100) {
@@ -31,19 +30,11 @@ class LeaderboardService {
             return { rank: null, percentile: null };
         }
 
-        // Count users with better (lower) time
-        const betterCount = await prisma.user.count({
-            where: {
-                bestSolve: { lt: user.bestSolve }
-            }
-        });
-
-        // Total ranked users
-        const totalCount = await prisma.user.count({
-            where: {
-                bestSolve: { not: null }
-            }
-        });
+        // Users with a better (lower) time, and total ranked users
+        const [betterCount, totalCount] = await Promise.all([
+            prisma.user.count({ where: { bestSolve: { lt: user.bestSolve } } }),
+            prisma.user.count({ where: { bestSolve: { not: null } } })
+        ]);
 
         const rank = betterCount + 1;
 

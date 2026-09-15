@@ -1,11 +1,11 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
+const { feedInclude } = require('./posts.service');
 
 class UserService {
     /**
      * Get full user profile including stats
      */
-    async getProfile(userId) {
+    async getProfile(userId, viewerId) {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             select: {
@@ -29,6 +29,9 @@ class UserService {
         if (!user) {
             throw new Error('User not found');
         }
+
+        // Email is private to its owner
+        if (userId !== viewerId) delete user.email;
 
         return user;
     }
@@ -75,39 +78,20 @@ class UserService {
     /**
      * Get all posts by a specific user
      */
-    async getUserPosts(userId, limit = 20, offset = 0) {
+    async getUserPosts(userId, viewerId, limit = 20, offset = 0) {
         return await prisma.post.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
             take: Number(limit),
             skip: Number(offset),
-            include: {
-                user: {
-                    select: { id: true, username: true, avatar: true, bestSolve: true }
-                },
-                comments: {
-                    take: 3,
-                    orderBy: { createdAt: 'desc' },
-                    include: {
-                        user: {
-                            select: { id: true, username: true, avatar: true }
-                        }
-                    }
-                },
-                likes: {
-                    select: { userId: true }
-                },
-                _count: {
-                    select: { likes: true, comments: true }
-                }
-            }
+            include: feedInclude(viewerId)
         });
     }
 
     /**
      * Get all posts liked by a specific user
      */
-    async getLikedPosts(userId, limit = 20, offset = 0) {
+    async getLikedPosts(userId, viewerId, limit = 20, offset = 0) {
         const likes = await prisma.like.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
@@ -115,26 +99,7 @@ class UserService {
             skip: Number(offset),
             include: {
                 post: {
-                    include: {
-                        user: {
-                            select: { id: true, username: true, avatar: true, bestSolve: true }
-                        },
-                        comments: {
-                            take: 3,
-                            orderBy: { createdAt: 'desc' },
-                            include: {
-                                user: {
-                                    select: { id: true, username: true, avatar: true }
-                                }
-                            }
-                        },
-                        likes: {
-                            select: { userId: true }
-                        },
-                        _count: {
-                            select: { likes: true, comments: true }
-                        }
-                    }
+                    include: feedInclude(viewerId)
                 }
             }
         });

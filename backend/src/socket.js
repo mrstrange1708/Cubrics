@@ -1,9 +1,8 @@
 const { Server } = require('socket.io');
-const { PrismaClient } = require('@prisma/client');
+const jwt = require('jsonwebtoken');
+const prisma = require('./lib/prisma');
 
-const prisma = new PrismaClient();
-
-// Track online users: { oderId: socketId }
+// Track online users: { userId: socketId }
 const onlineUsers = new Map();
 
 function initializeSocket(server) {
@@ -15,32 +14,45 @@ function initializeSocket(server) {
         }
     });
 
+    // Authenticate every connection with the same JWT the REST API uses.
+    // The user id comes from the token, never from client-sent event data.
+    io.use((socket, next) => {
+        try {
+            const { userId } = jwt.verify(socket.handshake.auth?.token, process.env.JWT_SECRET);
+            socket.userId = userId;
+            next();
+        } catch {
+            next(new Error('Authentication required'));
+        }
+    });
+
     io.on('connection', (socket) => {
-        console.log('User connected:', socket.id);
+        const userId = socket.userId;
 
-        // User joins (authenticates)
-        socket.on('user-online', (userId) => {
-            if (userId) {
-                onlineUsers.set(userId, socket.id);
-                console.log(`User ${userId} is online`);
+        // User joins
+        socket.on('user-online', () => {
+            onlineUsers.set(userId, socket.id);
 
-                // Broadcast online status to all
-                io.emit('user-status-change', {
-                    oderId: userId,
-                    status: 'online'
-                });
-            }
+            // Broadcast online status to all
+            io.emit('user-status-change', {
+                userId,
+                status: 'online'
+            });
         });
 
         // Send message
         socket.on('send-message', async (data) => {
-            const { senderId, receiverId, content } = data;
+            const { receiverId, content } = data || {};
+            if (!receiverId || !content) {
+                socket.emit('message-error', { error: 'receiverId and content required' });
+                return;
+            }
 
             try {
                 // Save to database
                 const message = await prisma.message.create({
                     data: {
-                        senderId,
+                        senderId: userId,
                         receiverId,
                         content
                     },
@@ -68,12 +80,12 @@ function initializeSocket(server) {
 
         // Typing indicator
         socket.on('typing', (data) => {
-            const { senderId, receiverId, isTyping } = data;
+            const { receiverId, isTyping } = data || {};
             const receiverSocketId = onlineUsers.get(receiverId);
 
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit('user-typing', {
-                    userId: senderId,
+                    userId,
                     isTyping
                 });
             }
@@ -86,19 +98,15 @@ function initializeSocket(server) {
 
         // Disconnect
         socket.on('disconnect', () => {
-            // Find and remove user
-            for (const [userId, socketId] of onlineUsers.entries()) {
-                if (socketId === socket.id) {
-                    onlineUsers.delete(userId);
-                    console.log(`User ${userId} disconnected`);
+            // Only mark offline if this socket is still the user's current one
+            // (a newer tab/reconnect may have replaced it)
+            if (onlineUsers.get(userId) === socket.id) {
+                onlineUsers.delete(userId);
 
-                    // Broadcast offline status
-                    io.emit('user-status-change', {
-                        userId,
-                        status: 'offline'
-                    });
-                    break;
-                }
+                io.emit('user-status-change', {
+                    userId,
+                    status: 'offline'
+                });
             }
         });
     });

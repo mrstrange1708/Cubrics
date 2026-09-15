@@ -72,9 +72,7 @@ export function CubeProvider({ children }: { children: ReactNode }) {
             }
 
             setSolutionPhases(data.phases);
-
-            // Keep loading for animation
-            await new Promise(resolve => setTimeout(resolve, 3500));
+            // No artificial wait: the loader fast-forwards once `finished` is set
             setIsSolving(false);
             return true;
         } catch (err: any) {

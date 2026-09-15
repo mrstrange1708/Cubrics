@@ -24,8 +24,8 @@ export interface Post {
     createdAt: string;
     updatedAt: string;
     user: PostUser;
-    comments: Comment[];
-    likes: { userId: string }[];
+    comments?: Comment[]; // only on single-post fetch
+    likes: { userId: string }[]; // list endpoints return only the viewer's own like
     _count: {
         likes: number;
         comments: number;

@@ -5,10 +5,8 @@ const router = express.Router();
 // POST /timer - Create a new timer record
 router.post('/', async (req, res) => {
     try {
-        const { userId, time } = req.body;
-        if (!userId) {
-            return res.status(400).json({ error: "userId is required" });
-        }
+        const userId = req.user.userId;
+        const { time } = req.body;
         const record = await timerService.createTimerRecord(userId, { time });
         res.json(record);
     } catch (error) {

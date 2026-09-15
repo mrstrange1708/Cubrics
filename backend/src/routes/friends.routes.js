@@ -1,5 +1,6 @@
 const express = require('express');
 const friendsService = require('../services/friends.service');
+const { requireSelf } = require('../middleware/auth.middleware');
 const router = express.Router();
 
 // GET /friends/:userId - Get user's friends
@@ -27,11 +28,11 @@ router.get('/:userId/times', async (req, res) => {
 // POST /friends/request - Send friend request
 router.post('/request', async (req, res) => {
     try {
-        const { senderId, receiverId } = req.body;
-        if (!senderId || !receiverId) {
-            return res.status(400).json({ error: "senderId and receiverId required" });
+        const { receiverId } = req.body;
+        if (!receiverId) {
+            return res.status(400).json({ error: "receiverId required" });
         }
-        const request = await friendsService.sendFriendRequest(senderId, receiverId);
+        const request = await friendsService.sendFriendRequest(req.user.userId, receiverId);
         res.json(request);
     } catch (error) {
         console.error("Send Friend Request Error:", error);
@@ -42,7 +43,7 @@ router.post('/request', async (req, res) => {
 // POST /friends/request/:requestId/accept - Accept friend request
 router.post('/request/:requestId/accept', async (req, res) => {
     try {
-        await friendsService.acceptFriendRequest(req.params.requestId);
+        await friendsService.acceptFriendRequest(req.params.requestId, req.user.userId);
         res.json({ success: true });
     } catch (error) {
         console.error("Accept Friend Request Error:", error);
@@ -53,7 +54,7 @@ router.post('/request/:requestId/accept', async (req, res) => {
 // POST /friends/request/:requestId/reject - Reject friend request
 router.post('/request/:requestId/reject', async (req, res) => {
     try {
-        await friendsService.rejectFriendRequest(req.params.requestId);
+        await friendsService.rejectFriendRequest(req.params.requestId, req.user.userId);
         res.json({ success: true });
     } catch (error) {
         console.error("Reject Friend Request Error:", error);
@@ -62,7 +63,7 @@ router.post('/request/:requestId/reject', async (req, res) => {
 });
 
 // GET /friends/:userId/requests - Get pending requests
-router.get('/:userId/requests', async (req, res) => {
+router.get('/:userId/requests', requireSelf(), async (req, res) => {
     try {
         const requests = await friendsService.getPendingRequests(req.params.userId);
         res.json(requests);
@@ -73,7 +74,7 @@ router.get('/:userId/requests', async (req, res) => {
 });
 
 // GET /friends/:userId/recommendations - Get friend recommendations
-router.get('/:userId/recommendations', async (req, res) => {
+router.get('/:userId/recommendations', requireSelf(), async (req, res) => {
     try {
         const recommendations = await friendsService.getRecommendations(req.params.userId);
         res.json(recommendations);
@@ -84,7 +85,7 @@ router.get('/:userId/recommendations', async (req, res) => {
 });
 
 // DELETE /friends/:userId/:friendId - Remove friend
-router.delete('/:userId/:friendId', async (req, res) => {
+router.delete('/:userId/:friendId', requireSelf(), async (req, res) => {
     try {
         await friendsService.removeFriend(req.params.userId, req.params.friendId);
         res.json({ success: true });

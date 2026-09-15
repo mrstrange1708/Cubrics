@@ -50,10 +50,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Create socket connection
+        // Create socket connection (server authenticates with the JWT)
         const newSocket = io(SOCKET_URL, {
             transports: ['websocket', 'polling'],
             autoConnect: true,
+            auth: { token: localStorage.getItem('token') },
         });
 
         newSocket.on('connect', () => {
@@ -61,7 +62,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             setIsConnected(true);
 
             // Announce user is online
-            newSocket.emit('user-online', user.id);
+            newSocket.emit('user-online');
 
             // Request online users
             newSocket.emit('get-online-users');
@@ -111,12 +112,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         return () => {
             newSocket.disconnect();
         };
-    }, [isAuthenticated, user]);
+        // Reconnect only when the logged-in account changes, not on profile edits
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, user?.id]);
 
     const sendMessage = useCallback((receiverId: string, content: string) => {
         if (socket && user) {
             socket.emit('send-message', {
-                senderId: user.id,
                 receiverId,
                 content
             });
@@ -126,7 +128,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const setTyping = useCallback((receiverId: string, isTyping: boolean) => {
         if (socket && user) {
             socket.emit('typing', {
-                senderId: user.id,
                 receiverId,
                 isTyping
             });

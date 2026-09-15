@@ -1,8 +1,9 @@
+// Load env before any module reads process.env at require time (e.g. JWT_SECRET)
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const { PrismaClient } = require('@prisma/client');
 
 // Import Socket
 const { initializeSocket } = require('./src/socket');
@@ -20,8 +21,6 @@ const userRoutes = require('./src/routes/user.routes');
 // Import Middleware
 const { authMiddleware, optionalAuthMiddleware } = require('./src/middleware/auth.middleware');
 
-dotenv.config();
-
 const app = express();
 const server = http.createServer(app);
 
@@ -31,14 +30,7 @@ const io = initializeSocket(server);
 // Make io accessible in routes
 app.set('io', io);
 
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 7777;
-
-// Pre-load solver tables at startup to avoid cold start delays
-console.log('[Startup] Pre-loading solver tables...');
-const tables = require('./src/services/solver/Tables');
-tables.init();
-console.log('[Startup] Solver tables ready ✅');
 
 app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -58,11 +50,6 @@ app.get('/health', (req, res) => {
 
 // Solver routes (public for demo, can be protected later)
 app.use('/', solverRoutes);
-
-// Leaderboard global view (public, but user-specific requires auth)
-app.get('/leaderboard/global', async (req, res, next) => {
-    next();
-});
 
 // ============================================
 // PROTECTED ROUTES (Authentication Required)
@@ -98,4 +85,9 @@ app.use((err, req, res, next) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log(`WebSocket server is ready`);
+
+    // Build solver tables after the port is bound so the host sees the service
+    // as up immediately after a cold start; the first /solve stays fast.
+    require('./src/services/solver/Tables').init();
+    console.log('[Startup] Solver tables ready ✅');
 });

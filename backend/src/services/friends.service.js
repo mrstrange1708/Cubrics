@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 class FriendsService {
     /**
@@ -57,6 +56,10 @@ class FriendsService {
      * Send a friend request
      */
     async sendFriendRequest(senderId, receiverId) {
+        if (senderId === receiverId) {
+            throw new Error('Cannot send a friend request to yourself');
+        }
+
         // Check if already friends
         const existingFriendship = await prisma.friendship.findUnique({
             where: {
@@ -95,12 +98,13 @@ class FriendsService {
     /**
      * Accept a friend request
      */
-    async acceptFriendRequest(requestId) {
+    async acceptFriendRequest(requestId, userId) {
         const request = await prisma.friendRequest.findUnique({
             where: { id: requestId }
         });
 
-        if (!request || request.status !== 'pending') {
+        // Only the receiver can accept
+        if (!request || request.status !== 'pending' || request.receiverId !== userId) {
             throw new Error('Invalid request');
         }
 
@@ -131,11 +135,13 @@ class FriendsService {
     /**
      * Reject a friend request
      */
-    async rejectFriendRequest(requestId) {
-        await prisma.friendRequest.update({
-            where: { id: requestId },
+    async rejectFriendRequest(requestId, userId) {
+        // Only the receiver can reject
+        const { count } = await prisma.friendRequest.updateMany({
+            where: { id: requestId, receiverId: userId, status: 'pending' },
             data: { status: 'rejected' }
         });
+        if (count === 0) throw new Error('Invalid request');
     }
 
     /**
@@ -160,27 +166,27 @@ class FriendsService {
      * Get friend recommendations (users with similar solve times)
      */
     async getRecommendations(userId) {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { bestSolve: true }
-        });
-
-        // Get existing friends
-        const friendships = await prisma.friendship.findMany({
-            where: { userId },
-            select: { friendId: true }
-        });
+        // User, existing friends and pending requests are independent lookups
+        const [user, friendships, pendingRequests] = await Promise.all([
+            prisma.user.findUnique({
+                where: { id: userId },
+                select: { bestSolve: true }
+            }),
+            prisma.friendship.findMany({
+                where: { userId },
+                select: { friendId: true }
+            }),
+            prisma.friendRequest.findMany({
+                where: {
+                    OR: [
+                        { senderId: userId, status: 'pending' },
+                        { receiverId: userId, status: 'pending' }
+                    ]
+                },
+                select: { senderId: true, receiverId: true }
+            })
+        ]);
         const friendIds = friendships.map(f => f.friendId);
-
-        // Get pending requests
-        const pendingRequests = await prisma.friendRequest.findMany({
-            where: {
-                OR: [
-                    { senderId: userId, status: 'pending' },
-                    { receiverId: userId, status: 'pending' }
-                ]
-            }
-        });
         const pendingUserIds = pendingRequests.map(r =>
             r.senderId === userId ? r.receiverId : r.senderId
         );

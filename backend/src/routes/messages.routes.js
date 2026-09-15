@@ -1,15 +1,16 @@
 const express = require('express');
 const messagesService = require('../services/messages.service');
+const { requireSelf } = require('../middleware/auth.middleware');
 const router = express.Router();
 
 // POST /messages - Send a message
 router.post('/', async (req, res) => {
     try {
-        const { senderId, receiverId, content } = req.body;
-        if (!senderId || !receiverId || !content) {
-            return res.status(400).json({ error: "senderId, receiverId, and content required" });
+        const { receiverId, content } = req.body;
+        if (!receiverId || !content) {
+            return res.status(400).json({ error: "receiverId and content required" });
         }
-        const message = await messagesService.sendMessage(senderId, receiverId, content);
+        const message = await messagesService.sendMessage(req.user.userId, receiverId, content);
         res.json(message);
     } catch (error) {
         console.error("Send Message Error:", error);
@@ -18,7 +19,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET /messages/conversations/:userId - Get all conversations
-router.get('/conversations/:userId', async (req, res) => {
+router.get('/conversations/:userId', requireSelf(), async (req, res) => {
     try {
         const conversations = await messagesService.getConversations(req.params.userId);
         res.json(conversations);
@@ -29,7 +30,7 @@ router.get('/conversations/:userId', async (req, res) => {
 });
 
 // GET /messages/:userId/:otherUserId - Get conversation between two users
-router.get('/:userId/:otherUserId', async (req, res) => {
+router.get('/:userId/:otherUserId', requireSelf(), async (req, res) => {
     try {
         const { limit } = req.query;
         const messages = await messagesService.getConversation(
@@ -47,8 +48,9 @@ router.get('/:userId/:otherUserId', async (req, res) => {
 // POST /messages/read - Mark messages as read
 router.post('/read', async (req, res) => {
     try {
-        const { senderId, receiverId } = req.body;
-        await messagesService.markAsRead(senderId, receiverId);
+        // Only the receiver marks their incoming messages as read
+        const { senderId } = req.body;
+        await messagesService.markAsRead(senderId, req.user.userId);
         res.json({ success: true });
     } catch (error) {
         console.error("Mark Read Error:", error);
@@ -57,7 +59,7 @@ router.post('/read', async (req, res) => {
 });
 
 // GET /messages/unread/:userId - Get unread count
-router.get('/unread/:userId', async (req, res) => {
+router.get('/unread/:userId', requireSelf(), async (req, res) => {
     try {
         const count = await messagesService.getUnreadCount(req.params.userId);
         res.json({ count });
